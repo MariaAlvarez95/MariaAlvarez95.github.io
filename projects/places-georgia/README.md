@@ -4,6 +4,8 @@ Interactive dashboard of cardiometabolic conditions (obesity, diabetes, high blo
 
 **Live dashboard:** https://mariaalvarez95.github.io/projects/places-georgia/
 
+![Dashboard overview: map of obesity prevalence by Georgia county, statewide values and key findings](preview.png)
+
 ## Question
 
 Where in Georgia are obesity, diabetes, high blood pressure, coronary heart disease, physical inactivity and food insecurity most common, and do they appear in the same counties?
