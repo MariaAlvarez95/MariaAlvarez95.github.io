@@ -1,5 +1,5 @@
 ---
-title: "Heart Health and Food Insecurity in Georgia"
+title: "Cardiometabolic Health and Food Insecurity in Georgia"
 output:
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -311,7 +311,7 @@ Row
 
 ### About this dashboard
 
-**Question.** Where in Georgia are heart and metabolic conditions and food insecurity most common, and do they appear in the same counties?
+**Question.** Where in Georgia are cardiometabolic conditions and food insecurity most common, and do they appear in the same counties?
 
 **Data.** CDC PLACES: County Data (GIS Friendly Format), 2025 release ([data.cdc.gov, dataset i46a-9kgh](https://data.cdc.gov/d/i46a-9kgh)). PLACES provides model-based estimates for every US county, built from 2023 Behavioral Risk Factor Surveillance System (BRFSS) data and census population data. The six measures refer to adults aged 18 and older: obesity, diagnosed diabetes, high blood pressure, coronary heart disease, no leisure-time physical activity and food insecurity in the past 12 months.
 

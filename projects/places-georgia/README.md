@@ -1,6 +1,6 @@
-# Heart Health and Food Insecurity in Georgia
+# Cardiometabolic Health and Food Insecurity in Georgia
 
-Interactive dashboard of heart and metabolic conditions and food insecurity in Georgia's 159 counties, built with R and flexdashboard.
+Interactive dashboard of cardiometabolic conditions (obesity, diabetes, high blood pressure, coronary heart disease), physical inactivity and food insecurity in Georgia's 159 counties, built with R and flexdashboard.
 
 **Live dashboard:** https://mariaalvarez95.github.io/projects/places-georgia/
 
