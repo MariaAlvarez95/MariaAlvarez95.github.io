@@ -1,0 +1,329 @@
+---
+title: "Heart Health and Food Insecurity in Georgia"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: flatly
+    navbar:
+      - { title: "Code", href: "https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia", align: right }
+      - { title: "Portfolio", href: "https://mariaalvarez95.github.io/", align: right }
+---
+
+```{r setup, include = FALSE}
+# Packages
+library(flexdashboard)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(plotly)
+library(DT)
+library(jsonlite)
+
+# Data created by get_data.R
+places   <- read_csv("data/places_ga_2025.csv", show_col_types = FALSE)
+counties <- read_json("data/ga_counties.geojson")   # county boundaries for the map
+
+# The six measures in the dashboard and the labels I want to show
+measures <- c(
+  OBESITY    = "Obesity",
+  DIABETES   = "Diabetes",
+  BPHIGH     = "High blood pressure",
+  CHD        = "Coronary heart disease",
+  LPA        = "Physical inactivity",
+  FOODINSECU = "Food insecurity"
+)
+
+# The file has one row per county and two columns per measure:
+# "obesity_adjprev" (age-adjusted prevalence, %) and "obesity_adj95ci" (its 95% CI, e.g. "32.5–49.0").
+# I reshape it to one row per county and measure, and split the CI into two numbers.
+# Age-adjusted prevalence lets me compare counties with older or younger populations fairly.
+ga <- places %>%
+  pivot_longer(-c(countyname, countyfips, totalpop18plus),
+               names_to = c("id", ".value"), names_sep = "_") %>%
+  extract(adj95ci, into = c("lower", "upper"), regex = "([0-9.]+)[^0-9.]+([0-9.]+)", convert = TRUE) %>%
+  transmute(
+    fips    = as.character(countyfips),
+    county  = countyname,
+    adults  = totalpop18plus,
+    id      = toupper(id),
+    measure = measures[id],
+    value   = adjprev,
+    lower,
+    upper
+  )
+
+# Georgia reference value: average of the county estimates, weighted by each county's adult population
+state <- ga %>%
+  group_by(id, measure) %>%
+  summarise(avg = weighted.mean(value, adults), .groups = "drop")
+
+state_avg <- function(m) round(state$avg[state$id == m], 1)
+
+# One row per county, one column per measure (used for the scatter plots and the table)
+wide <- ga %>%
+  select(fips, county, id, value) %>%
+  pivot_wider(names_from = id, values_from = value) %>%
+  left_join(distinct(ga, fips, adults), by = "fips")
+
+# Map: one color per county, darker = higher prevalence
+make_map <- function(m) {
+  d <- filter(ga, id == m)
+  plot_ly(
+    d, type = "choropleth", geojson = counties, featureidkey = "id",
+    locations = ~fips, z = ~value, colors = "YlOrRd",
+    text = ~paste0("<b>", county, " County</b><br>", measure, ": ", value,
+                   "%<br>95% CI: ", lower, "–", upper, "%"),
+    hoverinfo = "text",
+    marker = list(line = list(color = "white", width = 0.4))
+  ) %>%
+    colorbar(title = "%") %>%
+    layout(geo = list(fitbounds = "locations", visible = FALSE),
+           margin = list(l = 0, r = 0, t = 0, b = 0)) %>%
+    plotly_build() %>%
+    keep_small()
+}
+
+# plotly saves numbers with up to 50 decimals. I save the maps with 4 decimals instead (about 10 meters),
+# so the county shapes don't make the page too large to publish.
+keep_small <- function(widget) {
+  attr(widget$x, "TOJSON_FUNC") <- function(x, ...) {
+    jsonlite::toJSON(x, digits = 4, auto_unbox = TRUE, force = TRUE, null = "null", na = "null")
+  }
+  widget
+}
+
+# Ranking: the 15 counties with the highest prevalence, with 95% confidence intervals.
+# The dashed line is the Georgia reference value.
+make_ranking <- function(m) {
+  d <- ga %>%
+    filter(id == m) %>%
+    slice_max(value, n = 15) %>%
+    mutate(county = reorder(county, value),
+           label  = paste0(county, ": ", value, "% (95% CI ", lower, "–", upper, ")"))
+  p <- ggplot(d, aes(x = value, y = county, text = label)) +
+    geom_errorbarh(aes(xmin = lower, xmax = upper), height = 0.3, color = "grey60") +
+    geom_point(color = "#c0392b", size = 2.5) +
+    geom_vline(xintercept = state_avg(m), linetype = "dashed", color = "grey30") +
+    labs(x = "Age-adjusted prevalence among adults (%)", y = NULL) +
+    theme_minimal(base_size = 12)
+  ggplotly(p, tooltip = "text")
+}
+
+# Scatter plot: food insecurity (x) against a chronic condition (y), one dot per county.
+# r is the Pearson correlation between the two county-level estimates.
+make_scatter <- function(y_id) {
+  r <- cor(wide$FOODINSECU, wide[[y_id]])
+  p <- ggplot(wide, aes(x = FOODINSECU, y = .data[[y_id]],
+                        text = paste0(county, "<br>Food insecurity: ", FOODINSECU,
+                                      "%<br>", measures[y_id], ": ", .data[[y_id]], "%"))) +
+    geom_point(color = "#2c3e50", alpha = 0.7) +
+    geom_smooth(aes(group = 1), method = "lm", se = FALSE, color = "#c0392b") +
+    labs(x = "Food insecurity (%)", y = paste0(measures[y_id], " (%)"),
+         title = paste0("r = ", round(r, 2))) +
+    theme_minimal(base_size = 12)
+  ggplotly(p, tooltip = "text")
+}
+```
+
+Overview
+=======================================================================
+
+Row {data-height=130}
+-----------------------------------------------------------------------
+
+### Counties
+
+```{r}
+valueBox(n_distinct(ga$county), caption = "Georgia counties", icon = "fa-map", color = "primary")
+```
+
+### Obesity
+
+```{r}
+valueBox(paste0(state_avg("OBESITY"), "%"), caption = "Obesity, Georgia adults", icon = "fa-weight", color = "warning")
+```
+
+### Diabetes
+
+```{r}
+valueBox(paste0(state_avg("DIABETES"), "%"), caption = "Diabetes, Georgia adults", icon = "fa-tint", color = "danger")
+```
+
+### Food insecurity
+
+```{r}
+valueBox(paste0(state_avg("FOODINSECU"), "%"), caption = "Food insecurity, Georgia adults", icon = "fa-shopping-basket", color = "info")
+```
+
+Row {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
+### Obesity
+
+```{r}
+make_map("OBESITY")
+```
+
+### Diabetes
+
+```{r}
+make_map("DIABETES")
+```
+
+### High blood pressure
+
+```{r}
+make_map("BPHIGH")
+```
+
+### Physical inactivity
+
+```{r}
+make_map("LPA")
+```
+
+### Food insecurity
+
+```{r}
+make_map("FOODINSECU")
+```
+
+### Coronary heart disease
+
+```{r}
+make_map("CHD")
+```
+
+Row {data-height=230}
+-----------------------------------------------------------------------
+
+### Key findings
+
+```{r, results = "asis"}
+# For each measure: Georgia value and the counties with the lowest and highest estimates
+for (m in names(measures)) {
+  d  <- filter(ga, id == m)
+  lo <- slice_min(d, value, n = 1, with_ties = FALSE)
+  hi <- slice_max(d, value, n = 1, with_ties = FALSE)
+  cat("- **", measures[m], "**: ", state_avg(m), "% in Georgia, from ", lo$value, "% (",
+      lo$county, ") to ", hi$value, "% (", hi$county, ").\n", sep = "")
+}
+```
+
+Rankings
+=======================================================================
+
+Row {data-height=45}
+-----------------------------------------------------------------------
+
+### {.no-title}
+
+The **15 Georgia counties with the highest prevalence** for each measure. Dots are county estimates, gray lines their 95% confidence intervals, and the dashed line is the Georgia value.
+
+Row {.tabset .tabset-fade data-height=955}
+-----------------------------------------------------------------------
+
+### Obesity
+
+```{r}
+make_ranking("OBESITY")
+```
+
+### Diabetes
+
+```{r}
+make_ranking("DIABETES")
+```
+
+### High blood pressure
+
+```{r}
+make_ranking("BPHIGH")
+```
+
+### Physical inactivity
+
+```{r}
+make_ranking("LPA")
+```
+
+### Food insecurity
+
+```{r}
+make_ranking("FOODINSECU")
+```
+
+### Coronary heart disease
+
+```{r}
+make_ranking("CHD")
+```
+
+Food insecurity vs. disease
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### Food insecurity and obesity
+
+```{r}
+make_scatter("OBESITY")
+```
+
+### Food insecurity and diabetes
+
+```{r}
+make_scatter("DIABETES")
+```
+
+Row {data-height=120}
+-----------------------------------------------------------------------
+
+### How to read these charts
+
+Each dot is a Georgia county. The red line is a linear trend and **r** is the Pearson correlation between the two county estimates. These are county-level (ecological) associations: they show where conditions cluster, not that food insecurity causes obesity or diabetes in individuals. The correlations are also high partly by design: PLACES models every measure from the same population characteristics (age, sex, race and ethnicity) and county poverty, so its county estimates tend to move together.
+
+Data
+=======================================================================
+
+### Age-adjusted prevalence among adults (%), by county. Click a column to sort; use the search box to find a county.
+
+```{r}
+wide %>%
+  select(County = county, `Adults (18+)` = adults,
+         Obesity = OBESITY, Diabetes = DIABETES, `High blood pressure` = BPHIGH,
+         `Coronary heart disease` = CHD, `Physical inactivity` = LPA, `Food insecurity` = FOODINSECU) %>%
+  arrange(County) %>%
+  datatable(rownames = FALSE, extensions = "Buttons",
+            options = list(pageLength = 20, dom = "Bfrtip", buttons = c("csv"))) %>%
+  formatRound("Adults (18+)", digits = 0) %>%
+  formatRound(3:8, digits = 1)
+```
+
+About
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### About this dashboard
+
+**Question.** Where in Georgia are heart and metabolic conditions and food insecurity most common, and do they appear in the same counties?
+
+**Data.** CDC PLACES: County Data (GIS Friendly Format), 2025 release ([data.cdc.gov, dataset i46a-9kgh](https://data.cdc.gov/d/i46a-9kgh)). PLACES provides model-based estimates for every US county, built from 2023 Behavioral Risk Factor Surveillance System (BRFSS) data and census population data. The six measures refer to adults aged 18 and older: obesity, diagnosed diabetes, high blood pressure, coronary heart disease, no leisure-time physical activity and food insecurity in the past 12 months.
+
+**Methods.**
+
+- I used **age-adjusted prevalence**, so counties with older or younger populations can be compared fairly.
+- Maps and rankings show each county's estimate with its 95% confidence interval.
+- The Georgia value is the average of the 159 county estimates **weighted by each county's adult population**. It is a reference point, not an official state estimate.
+- The scatter plots show Pearson correlations between county estimates.
+
+**Limitations.** PLACES estimates are modeled, not direct survey counts, so small counties have wider confidence intervals. Because every measure is modeled from the same population characteristics and county poverty, estimates for different measures are strongly correlated partly by design. County-level correlations do not show individual-level relationships or causation.
+
+**Tools.** R (dplyr, tidyr, ggplot2, plotly, DT) and flexdashboard. County boundaries come from the GeoJSON file published by plotly. The code is on [GitHub](https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia).
+
+**Author.** Maria Alvarez-Nuncio, MPH (Global Health, Emory University). [LinkedIn](https://www.linkedin.com/in/maria-alvarez-nuncio) · [Portfolio](https://mariaalvarez95.github.io/)
