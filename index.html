@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Maria Alvarez</title>
+<title>Maria Alvarez-Nuncio, MPH | Public Health Data Analyst</title>
+<meta name="description" content="Portfolio of Maria Alvarez-Nuncio, MPH: public health data analysis, surveillance and dashboards in R, SAS and Power BI.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500&display=swap">
@@ -72,6 +73,9 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 .row .d{color:var(--fg-2)}
 .row .lk{display:flex;gap:14px}
 .row .lk a{border-bottom:1px solid currentColor}
+.row .lk a:hover{color:var(--sig)}
+.row .yr{white-space:nowrap}
+.note{padding:14px var(--gut) 0;color:var(--dim);max-width:900px}
 
 .about{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:clamp(28px,6vw,96px);padding:0 var(--gut) clamp(24px,4vw,48px)}
 .about .big{font-family:var(--serif);font-size:clamp(28px,3vw,44px);line-height:1.15;letter-spacing:-.01em}
@@ -82,7 +86,7 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 .kv .lead{flex:1;border-bottom:1px dotted var(--lead);transform:translateY(-4px)}
 
 .contact{padding:clamp(48px,8vw,120px) var(--gut) 22px}
-.contact .mail{display:inline-block;font-family:var(--serif);font-style:italic;font-size:clamp(44px,8vw,128px);letter-spacing:-.02em;line-height:1;padding-bottom:8px;border-bottom:3px solid var(--sig);overflow-wrap:anywhere;transition:color .2s}
+.contact .mail{display:inline-block;font-family:var(--serif);font-style:italic;font-size:clamp(30px,5.2vw,84px);letter-spacing:-.02em;line-height:1;padding-bottom:8px;border-bottom:3px solid var(--sig);overflow-wrap:anywhere;transition:color .2s}
 .contact .mail:hover{color:var(--sig)}
 .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;margin-top:72px;padding-top:16px;border-top:1px solid var(--rule);color:var(--dim)}
 .foot .links{display:flex;flex-wrap:wrap;gap:22px;color:var(--fg)}
@@ -102,73 +106,101 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 <body>
 
 <header class="bar up">
-  <span class="led"></span><span>Maria Alvarez</span><span class="dim hide-m">/ Portfolio 2026</span>
+  <span class="led"></span><span>Maria Alvarez-Nuncio, MPH</span><span class="dim hide-m">/ Portfolio 2026</span>
   <span class="grow"></span>
-  <nav><a href="#work">Work</a><a href="#about" class="hide-m">About</a><a href="#contact">Contact</a></nav></header>
+  <nav><a href="#work">Work</a><a href="#published" class="hide-m">Published</a><a href="#about" class="hide-m">About</a><a href="#contact">Contact</a></nav></header>
 
 <section class="hero" id="hero">
   <canvas id="gl"></canvas>
   <div class="hero-copy">
-    <p class="role up"><span class="sq"></span>Software developer</p>
-    <h1><span>Maria</span><em>Alvarez</em></h1>
-    <p class="sub">I build careful, fast interfaces and the small tools behind them.</p>
+    <p class="role up"><span class="sq"></span>Public health data analyst</p>
+    <h1><span>Maria</span><em>Alvarez-Nuncio</em></h1>
+    <p class="sub">I turn public health and nutrition data into clear tables, dashboards and reports, in R, SAS and Power BI.</p>
     <div class="cta up">
       <a class="key inv" href="#work">View work &darr;</a>
       <a class="key" href="https://github.com/MariaAlvarez95">GitHub &nearr;</a>
+      <a class="key" href="https://www.linkedin.com/in/maria-alvarez-nuncio">LinkedIn &nearr;</a>
     </div>
   </div></section>
 
 <section class="sec" id="work">
   <h2 class="sec-title">Selected Work</h2>
-  <div class="row th up"><span>Project</span><span>Description</span><span>Stack</span><span>Year</span><span>Links</span></div>
+  <div class="row th up"><span>Project</span><span>Description</span><span>Tools</span><span>Year</span><span>Links</span></div>
   <div class="row">
-    <span class="name">Tidepool</span>
-    <span class="d">Habit tracker that works offline and syncs when it can, built on a small event log instead of a database.</span>
-    <span class="st up">TypeScript, React, IndexedDB</span><span class="yr up">2026</span>
-    <span class="lk up"><a href="https://github.com/MariaAlvarez95">Code</a><a href="#">Live</a></span>
+    <span class="name">Heart Health &amp; Food Insecurity in Georgia</span>
+    <span class="d">Interactive dashboard of CDC PLACES 2025 county estimates for obesity, diabetes, high blood pressure, heart disease, physical inactivity and food insecurity: maps, county rankings with 95% confidence intervals, and how food insecurity tracks obesity and diabetes across Georgia&rsquo;s 159 counties.</span>
+    <span class="st up">R, flexdashboard, plotly</span><span class="yr up">2026</span>
+    <span class="lk up"><a href="projects/places-georgia/">Live</a><a href="https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia">Code</a></span>
   </div>
   <div class="row">
-    <span class="name">Ledgerline</span>
-    <span class="d">Household budgeting dashboard that reads bank CSV exports and sorts spending with plain, editable rules.</span>
-    <span class="st up">Python, FastAPI, SQLite</span><span class="yr up">2025</span>
-    <span class="lk up"><a href="https://github.com/MariaAlvarez95">Code</a><a href="#">Live</a></span>
+    <span class="name">Biofortified Crop Releases</span>
+    <span class="d">MPH capstone dashboard of 450 HarvestPlus biofortified crop releases across Africa, Latin America and Asia (2004&ndash;2021): micronutrient content, yield and releases by country and crop.</span>
+    <span class="st up">R, flexdashboard</span><span class="yr up">2025</span>
+    <span class="lk up"><a href="https://mariaalvarez95.github.io/Biofortification/maria_dashboard.html">Live</a><a href="https://github.com/MariaAlvarez95/Biofortification">Code</a></span>
   </div>
   <div class="row">
-    <span class="name">Wayfinder</span>
-    <span class="d">Transit map that works with a keyboard and a screen reader, in under 50&nbsp;KB.</span>
-    <span class="st up">Svelte, D3, GTFS</span><span class="yr up">2025</span>
-    <span class="lk up"><a href="https://github.com/MariaAlvarez95">Code</a><a href="#">Live</a></span>
+    <span class="name">Heart Attack History Among Men</span>
+    <span class="d">Reproducible R report for Emory&rsquo;s DATA 550 using the Panel Study of Income Dynamics: descriptive table and age at first heart attack among male heads of household, built with Make, renv and Docker.</span>
+    <span class="st up">R Markdown, gtsummary, Make, renv, Docker</span><span class="yr up">2025</span>
+    <span class="lk up"><a href="projects/heart-attack-analysis/report.html">Report</a><a href="https://github.com/MariaAlvarez95/final_project_maria">Code</a></span>
+  </div>
+</section>
+
+<section class="sec" id="published">
+  <h2 class="sec-title">Published &amp; Professional Work</h2>
+  <div class="row th up"><span>Work</span><span>My role</span><span>Where</span><span>Year</span><span>Links</span></div>
+  <div class="row">
+    <span class="name">Action Stories Map</span>
+    <span class="d">Created the initial design, Power BI prototype and dataset for this map of action stories by city and prevention approach on CDC&rsquo;s Best Practices Clearinghouse.</span>
+    <span class="st up">CDC, Division for Heart Disease and Stroke Prevention</span><span class="yr up">2024&ndash;25</span>
+    <span class="lk up"><a href="https://hdsbpc.cdc.gov/s/action-stories-map">View</a></span>
   </div>
   <div class="row">
-    <span class="name">Sightline</span>
-    <span class="d">Browser extension that flags low-contrast text and missing alt text on any page you visit.</span>
-    <span class="st up">JavaScript, WebExtensions</span><span class="yr up">2024</span>
-    <span class="lk up"><a href="https://github.com/MariaAlvarez95">Code</a></span>
+    <span class="name">Action Story: Cardiac Rehabilitation</span>
+    <span class="d">Wrote this partner story about the Cleveland Clinic cardiac rehabilitation program from partner interviews; published after CDC clearance.</span>
+    <span class="st up">CDC Best Practices Clearinghouse</span><span class="yr up">2024&ndash;25</span>
+    <span class="lk up"><a href="https://hdsbpc.cdc.gov/s/article/Cleveland-Clinic-Main-Campus-Cardiac-Rehabilitation-Program">Read</a></span>
   </div>
   <div class="row">
-    <span class="name">Pantry</span>
-    <span class="d">Recipe planner that builds a shopping list from what is already in the fridge.</span>
-    <span class="st up">Kotlin, Jetpack Compose</span><span class="yr up">2024</span>
-    <span class="lk up"><a href="https://github.com/MariaAlvarez95">Code</a></span>
+    <span class="name">Micronutrient Status in Older Adults</span>
+    <span class="d">First author, with Thomas R. Ziegler: &ldquo;Micronutrient status and protein-energy malnutrition in free-living older adults: a current perspective.&rdquo;</span>
+    <span class="st up">Current Opinion in Gastroenterology</span><span class="yr up">2024</span>
+    <span class="lk up"><a href="https://pubmed.ncbi.nlm.nih.gov/38193299/">PubMed</a></span>
+  </div>
+  <div class="row">
+    <span class="name">Water Access and Women&rsquo;s Time</span>
+    <span class="d">Co-author: &ldquo;Improved water access may not reduce women&rsquo;s time burdens: evidence from Kenya and Honduras.&rdquo; Wrote the R code for the Kenya data and contributed to the formal analysis.</span>
+    <span class="st up">PLOS Water (accepted)</span><span class="yr up">2026</span>
+    <span class="lk up"></span>
+  </div>
+  <div class="row">
+    <span class="name">Heavy Menstrual Bleeding &amp; Iron</span>
+    <span class="d">Conducted the DAG-guided, survey-weighted analysis of heavy menstrual bleeding, iron deficiency and anemia among women in Guatemala (SIVESNU 2022/23); second author.</span>
+    <span class="st up">Micronutrient Forum, oral presentation</span><span class="yr up">2026</span>
+    <span class="lk up"></span>
   </div>
 </section>
 
 <section class="sec" id="about">
   <h2 class="sec-title">About</h2>
   <div class="about">
-    <p class="big">I care about the details people notice <em>without knowing why</em>: pages that load instantly, words that are clear, interfaces that work with a keyboard.</p>
+    <p class="big">Nutritionist turned public health data analyst. I work with surveillance and survey data from CDC, Emory and national nutrition surveys, and I care that every number is <em>checked, documented and easy to use</em>.</p>
     <div class="kv up">
-      <div><span class="k">Based in</span><span class="lead"></span><span>City, ST</span></div>
-      <div><span class="k">Focus</span><span class="lead"></span><span>Front-end, accessibility</span></div>
-      <div><span class="k">Tools</span><span class="lead"></span><span>TypeScript, React, Python</span></div>    </div>
+      <div><span class="k">Based in</span><span class="lead"></span><span>Atlanta, GA</span></div>
+      <div><span class="k">Focus</span><span class="lead"></span><span>Surveillance, nutrition, dashboards</span></div>
+      <div><span class="k">Tools</span><span class="lead"></span><span>R, SAS, Power BI, Excel</span></div>
+      <div><span class="k">Education</span><span class="lead"></span><span>MPH, Emory University</span></div>
+      <div><span class="k">Languages</span><span class="lead"></span><span>Spanish, English</span></div>
+    </div>
   </div>
 </section>
 
 <footer class="contact" id="contact">
   <h2 class="sec-title">Contact</h2>
-  <a class="mail" href="mailto:maria@example.com">maria@example.com</a>
+  <a class="mail" href="mailto:maria.alvarez@alumni.emory.edu">maria.alvarez@alumni.emory.edu</a>
   <div class="foot up">
-    <div class="links"><a href="https://github.com/MariaAlvarez95">GitHub &nearr;</a><a href="#">LinkedIn &nearr;</a><a href="#">R&eacute;sum&eacute; &nearr;</a></div>
+    <div class="links"><a href="https://github.com/MariaAlvarez95">GitHub &nearr;</a><a href="https://www.linkedin.com/in/maria-alvarez-nuncio">LinkedIn &nearr;</a></div>
+    <span>&copy; 2026 Maria Alvarez-Nuncio</span>
   </div>
 </footer>
 
