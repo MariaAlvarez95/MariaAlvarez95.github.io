@@ -307,9 +307,9 @@ measure_css <- sapply(names(measures), function(id) {
   p <- palettes[[id]]
   soft <- rgb(colorRamp(c("#ffffff", p[1]))(0.62), maxColorValue = 255)   # a very light tint for panel backgrounds
   glue('
-[data-m="{id}"]{{--key:{key_colors[id]};--track:{p[2]}}}
-body[data-measure="{id}"]{{--accent:{key_colors[id]};--accent-ink:{shade(id, 0.95)};--accent-50:{soft};--accent-100:{p[2]};--badge-high:{p[10]};--badge-low:{p[1]};--badge-ring:{p[5]};--ci:{p[5]};--trend:{p[10]};--ramp:linear-gradient(to right,{paste(p, collapse = ",")})}}
-body[data-measure="{id}"] .county{{fill:var(--f-{id})}}')
+[data-m="<id>"]{--key:<key_colors[id]>;--track:<p[2]>}
+body[data-measure="<id>"]{--accent:<key_colors[id]>;--accent-ink:<shade(id, 0.95)>;--accent-50:<soft>;--accent-100:<p[2]>;--badge-high:<p[10]>;--badge-low:<p[1]>;--badge-ring:<p[5]>;--ci:<p[5]>;--trend:<p[10]>;--ramp:linear-gradient(to right,<paste(p, collapse = ",")>)}
+body[data-measure="<id>"] .county{fill:var(--f-<id>)}', .open = "<", .close = ">")   # values go in <...> here because CSS uses curly brackets
 })
 
 # ---- The numbers the hover box needs, handed to the page as text (already rounded by R) ----
