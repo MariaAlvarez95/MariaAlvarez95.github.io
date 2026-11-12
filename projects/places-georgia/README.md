@@ -4,7 +4,7 @@ Interactive dashboard of cardiometabolic conditions (obesity, diabetes, high blo
 
 **Live dashboard:** https://mariaalvarez95.github.io/projects/places-georgia/
 
-![Dashboard overview: map of obesity prevalence by Georgia county, statewide values and key findings](preview.png)
+![Dashboard overview: map of obesity prevalence by Georgia county and statewide values](preview.png)
 
 ## Question
 
@@ -22,7 +22,7 @@ Measures (age-adjusted prevalence, %): obesity, diagnosed diabetes, high blood p
 - Age-adjusted prevalence, so counties with different age structures can be compared.
 - County estimates are shown with their 95% confidence intervals.
 - The Georgia value is the average of the county estimates weighted by each county's adult population (a reference point, not an official state estimate).
-- Pearson correlations between food insecurity and obesity or diabetes across counties.
+- Pearson correlations between food insecurity and the other five measures across counties.
 
 **Limitations:** PLACES estimates are modeled, not direct survey counts, and small counties have wider confidence intervals. County-level (ecological) correlations do not show individual-level relationships or causation.
 
@@ -31,14 +31,15 @@ Measures (age-adjusted prevalence, %): obesity, diagnosed diabetes, high blood p
 | File | What it does |
 |---|---|
 | `get_data.R` | Downloads the Georgia PLACES data from the CDC API and the county boundaries, and saves them in `data/` |
-| `index.Rmd` | The dashboard: data preparation, maps, rankings, scatter plots, table and notes |
+| `index.Rmd` | The dashboard: data preparation, maps, rankings, scatter plots, table and notes, plus a short JavaScript block for the clicks and search |
+| `styles.css` | The styles for the dashboard |
 | `index.html` | The rendered dashboard |
 | `data/` | The data files used by the dashboard |
 
 ## How to reproduce
 
 1. Open this folder in RStudio.
-2. Install the packages: `install.packages(c("flexdashboard", "dplyr", "tidyr", "readr", "ggplot2", "plotly", "DT", "jsonlite"))`
+2. Install the packages: `install.packages(c("flexdashboard", "dplyr", "tidyr", "readr", "jsonlite", "htmltools", "glue"))`
 3. Run `get_data.R` to download the data (optional; the data are already in `data/`).
 4. Knit `index.Rmd`.
 

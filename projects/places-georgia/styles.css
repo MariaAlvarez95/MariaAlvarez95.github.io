@@ -1,0 +1,358 @@
+/* ==========================================================================
+   Styles for the Georgia dashboard (index.Rmd).
+   This file only controls how things look. Every number, colour ramp and
+   position on the page is worked out in R.
+   ========================================================================== */
+
+:root{
+  --plane:#f3f4f7; --card:#fff; --ink:#15161a; --ink-2:#5a5e6b; --muted:#8a8f9e; --line:rgba(21,22,26,.09);
+  --sans:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.05);
+  --gap:14px;                          /* space between the cards */
+  --side:clamp(300px,23vw,340px);      /* width of the county panel on the right */
+}
+[hidden]{display:none !important}
+
+
+/* ---------- 1. flexdashboard shell ----------
+   flexdashboard supplies the pages and the sidebar. Its own top bar and chart
+   frames are switched off so that the cards below are the only chrome. */
+html,body{height:100%}
+body{background:var(--plane) !important;color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;padding:0 !important;overflow:hidden;-webkit-font-smoothing:antialiased}
+.navbar{display:none !important}
+.section.sidebar{z-index:30;top:0 !important;bottom:0;padding:var(--gap) 0 var(--gap) var(--gap) !important;background:none !important;border:0 !important;overflow:visible !important}
+.section.sidebar form{height:100%;padding:0}
+.dashboard-page-wrapper{padding:var(--gap) calc(var(--side) + 2 * var(--gap)) var(--gap) var(--gap)}
+#data.dashboard-page-wrapper,#about.dashboard-page-wrapper{padding-right:var(--gap)}
+.dashboard-row,.dashboard-column{flex:1 1 auto !important;min-height:0}
+.chart-wrapper{flex:1 1 auto !important;display:flex;flex-direction:column;min-height:0;margin:0 !important;border:0 !important;border-radius:0 !important;background:none !important}
+.chart-wrapper .chart-stage{flex:1 1 auto;position:relative;padding:0 !important;overflow:visible !important}
+.chart-shim{left:0 !important;top:0 !important;right:0 !important;bottom:0 !important}
+.chart-stage .card{position:absolute;inset:0}
+
+
+/* ---------- 2. Cards and the left rail ---------- */
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);color:var(--ink)}
+.card *,.card *::before,.card *::after{box-sizing:border-box;margin:0;padding:0}
+.card a{color:inherit;text-decoration:none}
+.card h1,.card h2,.card h4{font-family:var(--sans);color:var(--ink)}
+.card h1{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.card h2{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-top:10px}
+.for-m:not(.on){display:none !important}     /* only the pieces for the chosen measure are shown */
+
+.rail{display:flex;flex-direction:column;height:100%;padding:18px 14px 12px;overflow:auto;scrollbar-width:none}
+.brand{display:flex;gap:11px;align-items:flex-start;padding:0 6px}
+.logo{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--ink);color:#fff;font-size:12px;font-weight:700;letter-spacing:.02em}
+.brand b{display:block;font-size:13.5px;font-weight:700;line-height:1.3;letter-spacing:-.01em}
+.brand small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+
+.search{position:relative;display:flex;align-items:center;gap:8px;height:40px;margin-top:18px;padding:0 11px;border-radius:11px;background:var(--plane);border:1px solid transparent;transition:border-color .15s,background .15s,box-shadow .15s}
+.search:focus-within{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.search svg{flex:none;width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.6}
+.search input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;box-shadow:none;font:500 13.5px var(--sans);color:var(--ink)}
+.search input::placeholder{color:var(--muted);font-weight:400}
+.search kbd{font:600 11px var(--sans);color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;box-shadow:none}
+.results{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:10;list-style:none;padding:5px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(16,24,40,.12)}
+.results li{display:flex;justify-content:space-between;align-items:center;padding:8px 9px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer}
+.results li em{font-style:normal;font-size:12.5px;color:var(--muted)}
+.results li.is-active,.results li:hover{background:var(--accent-50);color:var(--accent-ink)}
+
+.sec{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:0 8px;margin:22px 0 8px}
+.m{display:flex;align-items:center;gap:9px;width:100%;height:38px;padding:0 10px;border:0;border-radius:10px;background:none;font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;cursor:pointer;transition:background .15s,color .15s}
+.m i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--key)}
+.m span{white-space:nowrap}
+.m b{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--muted)}
+.m:hover{background:var(--plane);color:var(--ink)}
+.m.on{background:var(--accent-50);color:var(--accent-ink);font-weight:600}
+.m.on b{color:var(--accent-ink)}
+body[data-page="about"] #measures{opacity:.4;pointer-events:none}
+body[data-page="compare"] .m[data-m="FOODINSECU"]{opacity:.5;pointer-events:none}   /* it is the x-axis on that page */
+body[data-page="compare"] .m[data-m="FOODINSECU"] b{font-size:0}
+body[data-page="compare"] .m[data-m="FOODINSECU"] b::after{content:"x-axis";font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--muted)}
+
+.grow{flex:1;min-height:12px}
+.pages a{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--ink-2);cursor:pointer;transition:background .15s,color .15s}
+.pages a:hover{background:var(--plane);color:var(--ink)}
+.pages a.on{color:var(--ink);font-weight:600}
+.pages svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.foot{display:flex;gap:14px;margin-top:10px;padding:10px 10px 0;border-top:1px solid var(--line);font-size:12px;font-weight:500}
+.foot a{color:var(--muted)}
+.foot a:hover{color:var(--ink)}
+
+
+/* ---------- 3. The panel on the right: Georgia, or the county that was picked ---------- */
+.inspector{position:fixed;top:var(--gap);right:var(--gap);bottom:var(--gap);width:var(--side);padding:18px 18px 16px;overflow:auto;scrollbar-width:none}
+body[data-page="data"] .inspector,body[data-page="about"] .inspector{display:none}
+.county-card:not(.sel){display:none}
+body.has-county .state-card{display:none}
+.i-head{display:flex;justify-content:space-between;align-items:center;height:28px}
+.chip{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;background:var(--plane);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
+.x{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:9px;background:none;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.x:hover{background:var(--plane);color:var(--ink)}
+.x svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.i-sub{font-size:13px;color:var(--ink-2);margin-top:1px}
+.tile{margin-top:16px;padding:15px 16px 14px;border-radius:14px;background:var(--accent-50)}
+.tile-label{font-size:12.5px;font-weight:700;color:var(--accent-ink)}
+.hero{font-size:50px;font-weight:700;line-height:1.05;letter-spacing:-.035em;margin-top:2px}
+.hero span{font-size:.48em;font-weight:600;letter-spacing:0;color:var(--ink-2);margin-left:2px}
+.tile-cap{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.duo div{padding:11px 13px;border:1px solid var(--line);border-radius:13px}
+.duo span{display:block;font-size:11.5px;font-weight:600;color:var(--muted)}
+.duo b{display:block;font-size:17px;font-weight:700;letter-spacing:-.015em;margin-top:1px}
+.duo em{display:block;font-style:normal;font-size:12px;color:var(--ink-2)}
+.rows-head{display:flex;justify-content:space-between;align-items:center;margin:20px 0 4px;padding:0 10px;font-size:11.5px;color:var(--muted)}
+.rows-head b{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.key{display:flex;align-items:center;gap:6px;font-weight:500}
+.key i{display:inline-block;width:2px;height:11px;border-radius:1px;background:var(--ink)}
+.mrow{display:grid;grid-template-columns:1fr auto;row-gap:7px;width:100%;padding:9px 10px 11px;border:0;border-radius:11px;background:none;color:var(--ink-2);text-align:left;cursor:pointer;transition:background .15s}
+.mrow-label{font-size:13px;font-weight:500}
+.mrow-val{font-size:13px;font-weight:700;color:var(--ink)}
+.mrow:hover{background:var(--plane)}
+.mrow.on{background:var(--accent-50)}
+.mrow.on .mrow-label{color:var(--accent-ink);font-weight:600}
+.meter{grid-column:1 / -1;position:relative;height:6px;border-radius:3px;background:var(--track)}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--key)}
+.meter .ga{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink);box-shadow:0 0 0 1.5px #fff}
+
+
+/* ---------- 4. Overview: the map ---------- */
+.mapcard{overflow:hidden}
+.mapcard header{position:absolute;left:0;right:0;top:0;z-index:2;padding:20px 24px 52px;pointer-events:none}
+body.has-county .mapcard header{background:linear-gradient(#fff 46%,rgba(255,255,255,.7) 72%,rgba(255,255,255,0))}   /* the zoomed map fades out under the title */
+.mapcard header p{font-size:13px;color:var(--ink-2);margin-top:2px}
+.back{position:absolute;right:18px;top:18px;z-index:3;display:none;align-items:center;gap:7px;height:34px;padding:0 13px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.05);transition:background .15s}
+.back:hover{background:var(--plane)}
+.back svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+body.has-county .back{display:flex}
+
+/* the state sits in a box that keeps Georgia's proportions; the space around it is for the labels */
+.mapstage{position:absolute;inset:88px 124px 58px 166px;container-type:size}
+.mapbox{position:absolute;inset:0;margin:auto;width:min(100cqw,calc(100cqh * var(--map-ratio)));aspect-ratio:var(--map-ratio)}
+.mapbox svg.map-svg{overflow:visible}              /* let the zoomed-in map spill out of its box (the card clips it) */
+.map-svg{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none}
+
+/* zoom: R stores each county's centre (--cx, --cy, in % of the box) and zoom level on its shape */
+.zoom{transform:translate(0%,0%) scale(1);transition:transform .9s cubic-bezier(.22,.72,.18,1)}
+body.has-county .zoom{transform:translate(calc((50 - var(--zoom) * var(--cx)) * 1%),calc((50 - var(--zoom) * var(--cy)) * 1%)) scale(var(--zoom))}
+.county{stroke:#fff;stroke-width:.8px;stroke-linejoin:round;vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .4s ease,opacity .45s ease}
+body.has-county .county:not(.sel){opacity:.62}
+.outline-hover,.sel-case,.sel-line{fill:none;vector-effect:non-scaling-stroke;pointer-events:none;stroke-linejoin:round}
+.outline-hover{stroke:var(--ink);stroke-width:1.5px}
+.sel-case{stroke:#fff;stroke-width:6px}
+.sel-line{stroke:var(--ink);stroke-width:2px}
+
+/* labels for the 3 highest and 3 lowest counties; hidden while zoomed in */
+.leaders{pointer-events:none}                       /* clicks go through to the county underneath */
+.leaders line,.leaders circle{vector-effect:non-scaling-stroke}
+.co-case{stroke:#fff;stroke-width:3px;opacity:.5}
+.co-line{stroke:var(--ink-2);stroke-width:1px}
+.co-dot{fill:var(--ink-2);stroke:#fff;stroke-width:1.5px}
+.leaders,.callouts{transition:opacity .4s ease .55s}
+body.has-county .leaders,body.has-county .callouts{opacity:0;pointer-events:none;transition:opacity .2s ease}
+.callout{position:absolute;display:flex;align-items:center;gap:7px;height:28px;padding:0 12px 0 5px !important;border:1px solid rgba(21,22,26,.13);border-radius:14px;background:#fff;font-size:12px;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.10);transform:translateY(-50%)}
+.callout.L{transform:translate(-100%,-50%)}
+.callout b{font-weight:600}
+.callout span{font-weight:500;color:var(--ink-2)}
+.bd{flex:none;width:18px;height:18px}
+.bd path{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.bd.high circle{fill:var(--badge-high)} .bd.high path{stroke:#fff}
+.bd.low circle{fill:var(--badge-low);stroke:var(--badge-ring)} .bd.low path{stroke:var(--accent-ink)}
+
+.legend{position:absolute;left:18px;bottom:18px;z-index:2;width:212px;padding:11px 13px 10px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.94);font-size:12px;color:var(--ink-2)}
+.lg-title{font-weight:600;color:var(--ink)}
+.lg-scale{position:relative;margin:9px 0 5px}
+.lg-bar{height:8px;border-radius:4px;background:var(--ramp)}
+.lg-ga{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink);box-shadow:0 0 0 1.5px #fff}
+.lg-ends{position:relative;display:flex;justify-content:space-between;font-weight:500}
+.lg-ends em{position:absolute;top:0;transform:translateX(-50%);font-style:normal;color:var(--ink);white-space:nowrap}
+.lg-key{display:flex;gap:14px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-weight:500;color:var(--ink)}
+.lg-key span{display:flex;align-items:center;gap:6px}
+.lg-key .bd{width:16px;height:16px}
+
+/* small Georgia in the corner that shows where the zoomed-in county is */
+.locator{position:absolute;right:18px;bottom:18px;z-index:2;padding:9px 10px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.95);opacity:0;pointer-events:none;transition:opacity .3s ease}
+body.has-county .locator{opacity:1;transition:opacity .4s ease .35s}
+.loc-map{position:relative;width:72px;aspect-ratio:var(--map-ratio)}
+.loc-map svg{display:block;width:100%;height:100%}
+.loc-map path{fill:#dcdde5}
+.loc-map i{position:absolute;left:calc(var(--cx) * 1%);top:calc(var(--cy) * 1%);width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 35%,#fff)}
+
+
+/* ---------- 5. Shared page layout (Rankings, Food insecurity vs. disease, Data, About) ---------- */
+.page{display:flex;flex-direction:column;padding:20px 24px 18px;overflow:hidden}
+.page > header{display:flex;align-items:flex-start;gap:20px;flex:none}
+.page > header p{font-size:13px;color:var(--ink-2);margin-top:2px}
+.page > header .right{margin-left:auto;flex:none}
+.page-body{flex:1;min-height:0;margin-top:14px}
+.pkey{display:flex;gap:16px;align-items:center;height:34px;font-size:12px;font-weight:500;color:var(--ink-2)}
+.pkey span{display:flex;align-items:center;gap:7px}
+.pkey i{display:inline-block}
+.pkey .k-dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.pkey .k-ci{width:20px;height:3px;border-radius:2px;background:var(--ci)}
+.pkey .k-ga{width:1.5px;height:13px;background:var(--ink)}
+
+
+/* ---------- 6. Rankings ---------- */
+.rank{display:flex;flex-direction:column;height:100%;--left:200px;--right:82px}
+.rank-top{position:relative;flex:none;height:26px;margin:0 var(--right) 0 var(--left)}
+.rank-top b{position:absolute;top:0;transform:translateX(-50%);font-size:12px;font-weight:600;white-space:nowrap}
+.rrows{position:relative;display:flex;flex-direction:column;min-height:0}
+.rank-grid{position:absolute;left:var(--left);right:var(--right);top:0;bottom:0;pointer-events:none}
+.rank-grid i{position:absolute;top:0;bottom:0;width:1px;background:#eceef2}
+.rank-grid i span{position:absolute;top:100%;left:0;margin-top:8px;transform:translateX(-50%);font-size:11.5px;font-style:normal;color:var(--muted)}
+.rank-grid i.ga{top:-8px;width:1.5px;margin-left:-.75px;background:var(--ink)}
+.rrow{position:relative;display:grid;grid-template-columns:44px 156px 1fr var(--right);align-items:center;flex:0 1 42px;min-height:22px;margin:0 6px 0 0;border-radius:10px;cursor:pointer;transition:background .15s}
+.rrow.beyond:not(.sel){display:none}                     /* only the top 15 are shown ... */
+.rrow.beyond.sel{margin-top:26px}                        /* ... plus the selected county, pinned underneath */
+.rrow.beyond.sel::before{content:"⋮";position:absolute;left:22px;top:-25px;font-size:15px;color:var(--muted)}
+.rrow:hover{background:var(--plane)}
+.rrow.sel{background:var(--accent-50)}
+.rk{padding-right:12px;text-align:right;font-size:12px;font-weight:500;color:var(--muted)}
+.nm{font-size:13.5px;font-weight:600;white-space:nowrap}
+.rrow.sel .nm{color:var(--accent-ink)}
+.track{position:relative;height:100%}
+.track .ci{position:absolute;top:50%;height:3px;margin-top:-1.5px;border-radius:2px;background:var(--ci)}
+.track .pt{position:absolute;top:50%;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px #fff}
+.rrow.sel .pt{box-shadow:0 0 0 2px var(--accent-50)}
+.vl{padding-right:18px;text-align:right;font-size:13px;font-weight:700}
+.rank-axis{flex:none;margin:30px var(--right) 0 var(--left);text-align:center;font-size:12px;font-weight:500;color:var(--ink-2)}
+
+
+/* ---------- 7. Food insecurity vs. disease ---------- */
+.stat{display:flex;align-items:baseline;gap:8px;height:34px;padding:0 13px;border-radius:11px;background:var(--accent-50);line-height:34px}
+.stat b{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.stat > span{font-size:12px;font-weight:600;color:var(--accent-ink)}
+.scatter{display:flex;flex-direction:column;height:100%}
+.sc-ytitle,.sc-xtitle{flex:none;font-size:12px;font-weight:500;color:var(--ink-2)}
+.sc-ytitle{margin-left:20px}
+.sc-xtitle{text-align:center;margin:26px 30px 0 54px}
+.sc-plot{position:relative;flex:1;min-height:0;margin:12px 30px 0 54px}
+.sc-plot .gx,.sc-plot .gy{position:absolute;background:#eceef2}
+.sc-plot .gx{top:0;bottom:0;width:1px}
+.sc-plot .gy{left:0;right:0;height:1px}
+.sc-plot .gx span,.sc-plot .gy span{position:absolute;font-size:11.5px;font-style:normal;color:var(--muted)}
+.sc-plot .gx span{top:100%;left:0;margin-top:8px;transform:translateX(-50%)}
+.sc-plot .gy span{right:100%;top:0;margin-right:10px;transform:translateY(-50%)}
+.sc-trend{position:absolute;inset:0;width:100%;height:100%}
+.sc-trend line{stroke:var(--trend);stroke-width:2px;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.dot{position:absolute;width:11.5px;height:11.5px;margin:0 0 -5.75px -5.75px;border-radius:50%;border:1.5px solid #fff;background:color-mix(in srgb,var(--accent) 82%,#fff);cursor:pointer}
+.dot::after{content:"";position:absolute;inset:-5px;border-radius:50%}        /* a bigger target for the pointer */
+.dot:hover{background:var(--accent);border-color:var(--ink);z-index:2}
+.dot.sel{width:17px;height:17px;margin:0 0 -8.5px -8.5px;border:2px solid var(--ink);background:var(--accent);z-index:3}
+.dot span{display:none;position:absolute;left:21px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;font-style:normal;white-space:nowrap;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+.dot.flip span{left:auto;right:21px}
+.dot.sel span{display:block}
+.readme{flex:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.5;color:var(--ink-2);max-width:112ch}
+.readme b{font-weight:700;color:var(--ink)}
+
+
+/* ---------- 8. Data ---------- */
+.dl-btn{display:flex;align-items:center;gap:7px;height:34px;padding:0 13px !important;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.05);transition:background .15s}
+.dl-btn:hover{background:var(--plane)}
+.dl-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.table-wrap{height:100%;overflow:auto;scrollbar-width:thin;border:1px solid var(--line);border-radius:14px}
+#dataTable{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:13.5px}
+#dataTable th,#dataTable td{height:38px;padding:0 16px;text-align:left;white-space:nowrap;border-bottom:1px solid rgba(21,22,26,.06)}
+#dataTable th:first-child{width:17%}
+#dataTable th:nth-child(2){width:12%}
+#dataTable .num{text-align:right;font-variant-numeric:tabular-nums}
+#dataTable thead th{position:sticky;top:0;z-index:2;height:50px;padding:0;white-space:normal;background:#fff;border-bottom:1px solid var(--line)}
+#dataTable thead th button{display:flex;align-items:center;gap:7px;width:100%;height:50px;padding:0 16px;border:0;background:none;font-size:12px;font-weight:700;line-height:1.25;color:var(--ink-2);cursor:pointer}
+#dataTable thead th.num button{justify-content:flex-end;text-align:right}
+#dataTable thead th button i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--key)}
+#dataTable .arrow{width:9px;font-weight:600;color:var(--ink)}
+#dataTable th[data-dir="up"] .arrow::after{content:"↑"}
+#dataTable th[data-dir="down"] .arrow::after{content:"↓"}
+#dataTable th[data-dir] button{color:var(--ink)}
+#dataTable thead th.on{background:var(--accent-50)}
+#dataTable thead th.on button{color:var(--accent-ink)}
+#dataTable thead tr.ga td{position:sticky;top:50px;z-index:1;background:#f7f8fa;font-weight:700;border-bottom:1px solid var(--line)}
+#dataTable tbody td{color:var(--ink-2)}
+#dataTable tbody td:first-child{color:var(--ink);font-weight:600}
+#dataTable td.on{background:var(--accent-50);color:var(--ink);font-weight:600}
+#dataTable thead tr.ga td.on{background:var(--accent-100)}
+#dataTable tbody tr{cursor:pointer}
+#dataTable tbody tr:hover td{background:var(--plane)}
+#dataTable tbody tr:hover td.on{background:var(--accent-100)}
+#dataTable tbody tr.sel td{background:var(--accent-50);color:var(--ink)}
+#dataTable tbody tr.sel td:first-child{color:var(--accent-ink);box-shadow:inset 3px 0 0 var(--accent)}
+#dataTable tbody tr.sel td.on{background:var(--accent-100)}
+
+
+/* ---------- 9. About ---------- */
+.about{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:48px;height:100%;overflow:auto;scrollbar-width:none;padding:6px 4px 12px}
+.about-main{max-width:74ch}
+.about h4{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:26px 0 7px}
+.about-main > h4:first-child,.about-main > .section:first-child h4{margin-top:0}
+.about p,.about li{font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+.about .lead-text p{font-size:20px;font-weight:600;line-height:1.4;letter-spacing:-.012em;color:var(--ink)}
+.about ul{padding-left:18px}
+.about li{margin-top:5px}
+.about strong{font-weight:700;color:var(--ink)}
+.about-main a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:rgba(21,22,26,.25);text-underline-offset:3px}
+.about-side{align-self:start;padding:18px 18px 12px;border:1px solid var(--line);border-radius:16px}
+.about-side h4{margin-top:0}
+.about-side .sub{font-size:12.5px;color:var(--ink-2);margin:-2px 0 10px}
+.mdef{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid rgba(21,22,26,.06)}
+.mdef i{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:var(--key)}
+.mdef b{display:block;font-size:13.5px;font-weight:600}
+.mdef span{display:block;font-size:12.5px;color:var(--ink-2)}
+
+
+/* ---------- 10. The hover box ---------- */
+.tip{position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;gap:2px;padding:9px 12px;border-radius:11px;background:var(--ink);color:#fff;font-size:13px;line-height:1.35;white-space:nowrap;pointer-events:none;box-shadow:0 8px 24px rgba(16,24,40,.2)}
+.tip strong,.tip b{font-weight:700}
+.tip small{font-size:11.5px;opacity:.65}
+
+
+/* ---------- 11. Narrower screens ---------- */
+
+/* Small laptops and tablets: the county panel slides over the page only when a county is picked */
+@media (max-width:1099px){
+  .dashboard-page-wrapper{padding-right:var(--gap)}
+  .inspector{display:none;z-index:20;width:300px;box-shadow:0 12px 40px rgba(16,24,40,.22)}
+  body.has-county .inspector{display:block}
+}
+@media (max-width:899px){
+  .callouts,.leaders,.lg-key{display:none !important}  /* no room for the labels around the map */
+  .mapstage{inset:84px 20px 128px 20px}
+}
+
+/* Phones: flexdashboard stacks everything in one column and moves the sidebar into the first page.
+   Its own top bar comes back for moving between pages. */
+@media (max-width:767px){
+  html,body{height:auto}
+  body{overflow:auto !important;padding:51px 0 0 !important}
+  .navbar{display:block !important}
+  .navbar-brand{max-width:calc(100vw - 80px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+  .dashboard-page-wrapper,#data.dashboard-page-wrapper,#about.dashboard-page-wrapper{padding:10px}
+  .dashboard-column{gap:10px}
+  #sidebar,#sidebar > .chart-stage,#sidebar .chart-shim{display:contents}
+  #sidebar > .chart-title{display:none}
+  .rail{order:1;height:auto;overflow:visible}
+  .rail .grow,.rail .explore,.pages,.foot{display:none}
+  .chart-wrapper{order:2;flex:none !important;display:block}
+  .chart-stage .card{position:relative;inset:auto}
+  .inspector,body.has-county .inspector{order:3;display:block;position:static;width:auto;box-shadow:var(--shadow)}
+  .mapcard{height:min(80vh,600px)}
+  .mapstage{inset:74px 14px 124px 14px}
+  .legend{left:12px;right:12px;bottom:12px;width:auto}
+  .locator{bottom:auto;top:64px;right:12px}
+  .page{overflow:visible}
+  .page > header{flex-wrap:wrap;gap:8px}
+  .page > header .right{margin-left:0}
+  .pkey{flex-wrap:wrap;height:auto;gap:6px 14px}
+  .rank{height:auto;--left:128px;--right:60px}
+  .rrow{grid-template-columns:28px 100px 1fr var(--right);flex:none;height:36px;margin:0}
+  .rk{padding-right:8px}
+  .rank-grid i:nth-child(even) span{display:none}      /* every other axis number */
+  .nm{font-size:13px;overflow:hidden;text-overflow:ellipsis}
+  .vl{padding-right:6px}
+  .scatter{height:auto}
+  .sc-plot{flex:none;height:320px;margin-right:12px}
+  .sc-xtitle{margin-right:12px}
+  .table-wrap{height:auto;max-height:70vh}
+  #dataTable{min-width:760px}
+  .about{grid-template-columns:1fr;gap:24px;height:auto;overflow:visible}
+}

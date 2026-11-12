@@ -4,28 +4,26 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
     vertical_layout: fill
-    theme: flatly
-    navbar:
-      - { title: "Code", href: "https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia", align: right }
-      - { title: "Portfolio", href: "https://mariaalvarez95.github.io/", align: right }
+    css: styles.css
 ---
 
 ```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
 # Packages
 library(flexdashboard)
 library(dplyr)
 library(tidyr)
 library(readr)
-library(ggplot2)
-library(plotly)
-library(DT)
 library(jsonlite)
+library(htmltools)
+library(glue)
 
 # Data created by get_data.R
 places   <- read_csv("data/places_ga_2025.csv", show_col_types = FALSE)
 counties <- read_json("data/ga_counties.geojson")   # county boundaries for the map
 
-# The six measures in the dashboard and the labels I want to show
+# The six measures in the dashboard, the labels I want to show, and a short phrase for each
 measures <- c(
   OBESITY    = "Obesity",
   DIABETES   = "Diabetes",
@@ -34,6 +32,34 @@ measures <- c(
   LPA        = "Physical inactivity",
   FOODINSECU = "Food insecurity"
 )
+phrases <- c(
+  OBESITY    = "of adults have obesity",
+  DIABETES   = "of adults have diagnosed diabetes",
+  BPHIGH     = "of adults have high blood pressure",
+  CHD        = "of adults have coronary heart disease",
+  LPA        = "of adults are physically inactive",
+  FOODINSECU = "of adults experienced food insecurity"
+)
+
+# One colour per measure. Each palette runs from light (low prevalence) to dark (high prevalence).
+# key_colors is the single colour that stands for the measure in dots and bars.
+palettes <- list(
+  OBESITY    = c("#f3ecff", "#e8dbff", "#dccbfc", "#d1baf9", "#bfa2f2", "#ae89eb", "#9d6fe3", "#8757cf", "#723fbb", "#59289c", "#3d1374"),  # purple
+  DIABETES   = c("#e2f3ff", "#cae8ff", "#b3ddfe", "#9cd2fb", "#7bbef4", "#59a9ed", "#3394e5", "#207dce", "#0b65b7", "#004b97", "#002f6e"),  # blue
+  BPHIGH     = c("#fdf8da", "#fbf3c2", "#faedaa", "#fae790", "#f6dd74", "#f3d153", "#f1c623", "#d8ab17", "#be910c", "#9a7005", "#6d4b04"),  # yellow
+  CHD        = c("#ffebea", "#ffd9d9", "#fdc7c7", "#fbb6b6", "#f89595", "#f47274", "#ed4952", "#d2343d", "#b81c28", "#940915", "#690509"),  # red
+  LPA        = c("#fff1e2", "#ffe5cb", "#ffd9b3", "#ffcd9b", "#fdb979", "#faa657", "#f6922e", "#dc7b23", "#c26517", "#9d4c0f", "#6e3108"),  # orange
+  FOODINSECU = c("#e2f9e6", "#cff1d4", "#bbeac3", "#a7e2b2", "#84d294", "#5fc176", "#2fb156", "#159747", "#007e3a", "#00612d", "#00411f")   # green
+)
+key_colors <- c(OBESITY = "#6a34b3", DIABETES = "#60adee", BPHIGH = "#d3a515", CHD = "#d2343d", LPA = "#f7983c", FOODINSECU = "#0e9244")
+
+# Small helpers
+shade   <- function(id, share) rgb(colorRamp(palettes[[id]])(share), maxColorValue = 255)  # colour for a share between 0 (lowest) and 1 (highest)
+fmt     <- function(x) formatC(x, format = "f", digits = 1)                               # one decimal: 35.2
+comma   <- function(x) format(x, big.mark = ",", trim = TRUE)                             # 13,966
+pct     <- function(x) round(100 * x, 2)                                                  # a share as a percentage, for positions on the page
+ordinal <- function(n) paste0(n, ifelse(n %% 100 %in% 11:13, "th", c("th", "st", "nd", "rd", rep("th", 6))[n %% 10 + 1]))  # 2nd, 3rd, 11th
+in_order <- function(id) match(id, names(measures))                                       # keeps the measures in the order above
 
 # The file has one row per county and two columns per measure:
 # "obesity_adjprev" (age-adjusted prevalence, %) and "obesity_adj95ci" (its 95% CI, e.g. "32.5–49.0").
@@ -48,282 +74,643 @@ ga <- places %>%
     county  = countyname,
     adults  = totalpop18plus,
     id      = toupper(id),
-    measure = measures[id],
+    measure = unname(measures[id]),
     value   = adjprev,
     lower,
     upper
   )
+n_counties <- n_distinct(ga$fips)
 
 # Georgia reference value: average of the county estimates, weighted by each county's adult population
 state <- ga %>%
   group_by(id, measure) %>%
-  summarise(avg = weighted.mean(value, adults), .groups = "drop")
+  summarise(avg = round(weighted.mean(value, adults), 1), .groups = "drop") %>%
+  arrange(in_order(id))
 
-state_avg <- function(m) round(state$avg[state$id == m], 1)
-
-# One row per county, one column per measure (used for the scatter plots and the table)
-wide <- ga %>%
-  select(fips, county, id, value) %>%
-  pivot_wider(names_from = id, values_from = value) %>%
-  left_join(distinct(ga, fips, adults), by = "fips")
-
-# Map: one color per county, darker = higher prevalence
-make_map <- function(m) {
-  d <- filter(ga, id == m)
-  plot_ly(
-    d, type = "choropleth", geojson = counties, featureidkey = "id",
-    locations = ~fips, z = ~value, colors = "YlOrRd",
-    text = ~paste0("<b>", county, " County</b><br>", measure, ": ", value,
-                   "%<br>95% CI: ", lower, "–", upper, "%"),
-    hoverinfo = "text",
-    marker = list(line = list(color = "white", width = 0.4))
+# For every county and measure: its rank, its difference from Georgia, and its colour on the map
+ga <- ga %>%
+  left_join(select(state, id, avg), by = "id") %>%
+  group_by(id) %>%
+  mutate(
+    from_top    = min_rank(desc(value)),     # 1 = highest prevalence (ties share a rank)
+    from_bottom = min_rank(value),           # 1 = lowest prevalence
+    rank_text   = case_when(
+      from_top <= from_bottom & from_top == 1 ~ "Highest",
+      from_top <= from_bottom                 ~ paste(ordinal(from_top), "highest"),
+      from_bottom == 1                        ~ "Lowest",
+      TRUE                                    ~ paste(ordinal(from_bottom), "lowest")
+    ),
+    diff      = round(value - avg, 1),
+    diff_text = paste0(ifelse(diff > 0, "+", ifelse(diff < 0, "−", "")), fmt(abs(diff))),
+    share     = (value - min(value)) / (max(value) - min(value)),   # 0 = lowest county, 1 = highest county
+    fill      = shade(first(id), share),
+    bar_max   = max(value) * 1.06                                   # right-hand end of the small bars in the county panel
   ) %>%
-    colorbar(title = "%") %>%
-    layout(geo = list(fitbounds = "locations", visible = FALSE),
-           margin = list(l = 0, r = 0, t = 0, b = 0)) %>%
-    plotly_build() %>%
-    keep_small()
-}
+  ungroup() %>%
+  arrange(county, in_order(id))
 
-# plotly saves numbers with up to 50 decimals. I save the maps with 4 decimals instead (about 10 meters),
-# so the county shapes don't make the page too large to publish.
-keep_small <- function(widget) {
-  attr(widget$x, "TOJSON_FUNC") <- function(x, ...) {
-    jsonlite::toJSON(x, digits = 4, auto_unbox = TRUE, force = TRUE, null = "null", na = "null")
+# Lowest and highest county for each measure
+extremes <- ga %>%
+  group_by(id) %>%
+  summarise(lo = min(value), hi = max(value),
+            lo_county = county[which.min(value)], hi_county = county[which.max(value)], .groups = "drop")
+state <- left_join(state, extremes, by = "id")
+
+# The three highest and three lowest counties for each measure (these get a label on the map)
+labelled <- bind_rows(
+  ga %>% group_by(id) %>% arrange(desc(value), county, .by_group = TRUE) %>% slice_head(n = 3) %>% mutate(kind = "high"),
+  ga %>% group_by(id) %>% arrange(value, desc(county), .by_group = TRUE) %>% slice_head(n = 3) %>% mutate(kind = "low")
+) %>% ungroup()
+
+# One row per county, one column per measure (used for the scatter plot and the table)
+wide <- ga %>%
+  select(fips, county, adults, id, value) %>%
+  pivot_wider(names_from = id, values_from = value) %>%
+  arrange(county)
+
+# ---- County shapes for the map -------------------------------------------------------------------
+# The boundary file gives each county as lists of longitude/latitude points.
+# I put all the points in one table, then turn them into flat x/y positions.
+outline <- bind_rows(lapply(counties$features, function(f) {
+  polygons <- if (f$geometry$type == "Polygon") list(f$geometry$coordinates) else f$geometry$coordinates
+  bind_rows(lapply(seq_along(polygons), function(p) {
+    bind_rows(lapply(seq_along(polygons[[p]]), function(r) {
+      points <- matrix(unlist(polygons[[p]][[r]]), ncol = 2, byrow = TRUE)
+      tibble(fips = f$id, ring = paste(p, r), lon = points[, 1], lat = points[, 2])
+    }))
+  }))
+}))
+outline <- outline %>%
+  mutate(x = lon * cos(32.7 * pi / 180) * 100,   # 32.7°N is the middle of Georgia; this keeps east-west distances in proportion
+         y = -lat * 100) %>%                     # on a screen, y counts downwards
+  mutate(x = x - min(x), y = y - min(y))
+map_w <- max(outline$x)
+map_h <- max(outline$y)
+
+# For each county: the outline as an SVG path, its centre point, and how far to zoom in when it is clicked
+shapes <- outline %>%
+  group_by(fips, ring) %>%
+  mutate(next_x = lead(x, default = first(x)), next_y = lead(y, default = first(y)),
+         cross  = x * next_y - next_x * y) %>%
+  summarise(path = paste0("M", paste(sprintf("%.2f %.2f", x, y), collapse = "L"), "Z"),
+            area = sum(cross) / 2,
+            cx   = sum((x + next_x) * cross) / (6 * area),     # centre of gravity of the outline
+            cy   = sum((y + next_y) * cross) / (6 * area),
+            .groups = "drop") %>%
+  group_by(fips) %>%
+  summarise(path = paste(path, collapse = ""),
+            cx = cx[which.max(abs(area))], cy = cy[which.max(abs(area))], .groups = "drop") %>%
+  left_join(outline %>% group_by(fips) %>% summarise(x0 = min(x), x1 = max(x), y0 = min(y), y1 = max(y)), by = "fips") %>%
+  mutate(mid_x = pct((x0 + x1) / 2 / map_w),               # middle of the county, as a % of the map
+         mid_y = pct((y0 + y1) / 2 / map_h),
+         zoom  = round(pmin(7, pmax(2.2, 0.32 * map_h / pmax(x1 - x0, y1 - y0))), 2))   # small counties zoom in more
+
+# The left and right edge of Georgia at each height. Labels are placed just outside this outline.
+edges <- outline %>%
+  group_by(fips, ring) %>%
+  mutate(next_x = lead(x), next_y = lead(y)) %>%
+  ungroup() %>%
+  filter(!is.na(next_x), y != next_y)
+slice_y <- (seq_len(160) - 0.5) / 160 * map_h
+state_edge <- t(sapply(slice_y, function(at) {
+  crossing <- edges[pmin(edges$y, edges$next_y) <= at & pmax(edges$y, edges$next_y) >= at, ]
+  xs <- crossing$x + (at - crossing$y) / (crossing$next_y - crossing$y) * (crossing$next_x - crossing$x)
+  c(left = min(xs), right = max(xs))
+}))
+edge_at <- function(side, from, to) {
+  rows <- slice_y >= from - map_h / 160 & slice_y <= to + map_h / 160
+  if (side == "L") min(state_edge[rows, "left"]) else max(state_edge[rows, "right"])
+}
+state_outline <- paste0("M", paste(sprintf("%.1f %.1f", c(state_edge[, "left"], rev(state_edge[, "right"])),
+                                           c(slice_y, rev(slice_y))), collapse = "L"), "Z")
+
+# Where the six labels go: on the nearer side of the state, spread apart so they do not overlap
+place_labels <- function(d) {
+  spacing <- 0.095 * map_h
+  d$side <- ifelse(d$cx - sapply(d$cy, function(y) edge_at("L", y, y)) <= sapply(d$cy, function(y) edge_at("R", y, y)) - d$cx, "L", "R")
+  d$label_y <- d$cy
+  for (s in c("L", "R")) {
+    rows <- which(d$side == s)
+    rows <- rows[order(d$cy[rows])]
+    for (pass in 1:60) for (j in seq_along(rows)[-1]) {
+      overlap <- d$label_y[rows[j - 1]] + spacing - d$label_y[rows[j]]
+      if (overlap > 0) {
+        d$label_y[rows[j - 1]] <- d$label_y[rows[j - 1]] - overlap / 2
+        d$label_y[rows[j]]     <- d$label_y[rows[j]] + overlap / 2
+      }
+    }
   }
-  widget
+  d$label_x <- mapply(function(s, y) edge_at(s, y - spacing / 2, y + spacing / 2), d$side, d$label_y, USE.NAMES = FALSE) +
+    ifelse(d$side == "L", -1, 1) * 0.025 * map_w
+  d
 }
+labelled <- labelled %>%
+  left_join(select(shapes, fips, cx, cy), by = "fips") %>%
+  group_by(id) %>%
+  group_modify(~ place_labels(.x)) %>%
+  ungroup()
 
-# Ranking: the 15 counties with the highest prevalence, with 95% confidence intervals.
-# The dashed line is the Georgia reference value.
-make_ranking <- function(m) {
-  d <- ga %>%
-    filter(id == m) %>%
-    slice_max(value, n = 15) %>%
-    mutate(county = reorder(county, value),
-           label  = paste0(county, ": ", value, "% (95% CI ", lower, "–", upper, ")"))
-  p <- ggplot(d, aes(x = value, y = county, text = label)) +
-    geom_errorbarh(aes(xmin = lower, xmax = upper), height = 0.3, color = "grey60") +
-    geom_point(color = "#c0392b", size = 2.5) +
-    geom_vline(xintercept = state_avg(m), linetype = "dashed", color = "grey30") +
-    labs(x = "Age-adjusted prevalence among adults (%)", y = NULL) +
-    theme_minimal(base_size = 12)
-  ggplotly(p, tooltip = "text")
-}
+# Small drawings used on buttons and labels
+icons <- c(
+  search   = '<svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>',
+  overview = '<svg viewBox="0 0 16 16"><path d="M2 4.2l4-1.7 4 1.7 4-1.7v9.3l-4 1.7-4-1.7-4 1.7z"/><path d="M6 2.5v9.3M10 4.2v9.3"/></svg>',
+  rankings = '<svg viewBox="0 0 16 16"><path d="M3 13V8M8 13V3M13 13V6"/></svg>',
+  compare  = '<svg viewBox="0 0 16 16"><circle cx="4" cy="11.5" r="1.2"/><circle cx="7.5" cy="7.5" r="1.2"/><circle cx="12" cy="4" r="1.2"/><circle cx="11.5" cy="10.5" r="1.2"/></svg>',
+  data     = '<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.6"/><path d="M2 7h12M6.5 7v6"/></svg>',
+  about    = '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 7.3v3.5M8 5.1v.2"/></svg>',
+  close    = '<svg viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8"/></svg>',
+  reset    = '<svg viewBox="0 0 16 16"><path d="M6 3H3v3M10 13h3v-3M3 3l4 4M13 13L9 9"/></svg>',
+  download = '<svg viewBox="0 0 16 16"><path d="M8 2.5v8M4.8 7.6L8 10.8l3.2-3.2M3 13.5h10"/></svg>',
+  high     = '<svg class="bd high" viewBox="-9 -9 18 18"><circle r="9"/><path d="M0 4V-4M-3.3 -.7L0 -4L3.3 -.7"/></svg>',   # arrow up: one of the 3 highest
+  low      = '<svg class="bd low" viewBox="-9 -9 18 18"><circle r="8.5"/><path d="M0 -4V4M-3.3 .7L0 4L3.3 .7"/></svg>'      # arrow down: one of the 3 lowest
+)
 
-# Scatter plot: food insecurity (x) against a chronic condition (y), one dot per county.
-# r is the Pearson correlation between the two county-level estimates.
-make_scatter <- function(y_id) {
-  r <- cor(wide$FOODINSECU, wide[[y_id]])
-  p <- ggplot(wide, aes(x = FOODINSECU, y = .data[[y_id]],
-                        text = paste0(county, "<br>Food insecurity: ", FOODINSECU,
-                                      "%<br>", measures[y_id], ": ", .data[[y_id]], "%"))) +
-    geom_point(color = "#2c3e50", alpha = 0.7) +
-    geom_smooth(aes(group = 1), method = "lm", se = FALSE, color = "#c0392b") +
-    labs(x = "Food insecurity (%)", y = paste0(measures[y_id], " (%)"),
-         title = paste0("r = ", round(r, 2))) +
-    theme_minimal(base_size = 12)
-  ggplotly(p, tooltip = "text")
-}
+# The measure name as a page title. All six are written out; the page shows the one that is selected.
+measure_titles <- paste0(glue('<span class="for-m" data-m="{names(measures)}">{measures}</span>'), collapse = "")
 ```
 
-Overview
+Sidebar {.sidebar data-width=282}
 =======================================================================
 
-Row {data-height=130}
------------------------------------------------------------------------
+```{r sidebar}
+# ---- Left rail: search, the six measures, links to the pages ----
+search_items <- ga %>%
+  group_by(fips, county) %>%
+  summarise(values = paste0(glue('<em class="for-m" data-m="{id}">{fmt(value)}%</em>'), collapse = ""), .groups = "drop") %>%
+  glue_data('<li data-fips="{fips}" data-name="{tolower(county)}" hidden><span>{county} County</span>{values}</li>')
 
-### Counties
+measure_buttons <- glue_data(state,
+  '<button type="button" class="m" data-m="{id}" data-pick="{id}"><i></i><span>{measure}</span><b>{fmt(avg)}%</b></button>')
 
-```{r}
-valueBox(n_distinct(ga$county), caption = "Georgia counties", icon = "fa-map", color = "primary")
+page_links <- glue('<a href="#{c("overview", "rankings", "compare", "data", "about")}">{icons[c("overview", "rankings", "compare", "data", "about")]}{c("Overview", "Rankings", "Food insecurity vs. disease", "Data", "About")}</a>')
+
+rail <- glue('
+<div class="rail card">
+  <div class="brand"><span class="logo">GA</span><div><b>Cardiometabolic Health and Food Insecurity in Georgia</b><small>CDC PLACES 2025</small></div></div>
+  <div class="search">{icons["search"]}
+    <input id="q" type="text" placeholder="Find a county" autocomplete="off" spellcheck="false" aria-label="Find a county"><kbd>/</kbd>
+    <ul class="results" hidden>{paste(search_items, collapse = "")}</ul>
+  </div>
+  <div class="sec">Measure</div>
+  <div id="measures">{paste(measure_buttons, collapse = "")}</div>
+  <div class="grow"></div>
+  <div class="sec explore">Explore</div>
+  <nav class="pages">{paste(page_links, collapse = "")}</nav>
+  <div class="foot">
+    <a href="https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia">Code ↗</a>
+    <a href="https://mariaalvarez95.github.io/">Portfolio ↗</a>
+  </div>
+</div>')
+
+# ---- Right panel: Georgia by default, or the county that was picked ----
+# Every county gets its own card, written here by R. The page shows one card at a time.
+state_headlines <- glue_data(state, '
+  <div class="for-m" data-m="{id}">
+    <div class="tile"><div class="tile-label">{measure}</div><div class="hero">{fmt(avg)}<span>%</span></div><div class="tile-cap">{phrases[id]}</div></div>
+    <div class="duo"><div><span>Lowest</span><b>{fmt(lo)}%</b><em>{lo_county}</em></div><div><span>Highest</span><b>{fmt(hi)}%</b><em>{hi_county}</em></div></div>
+  </div>')
+state_card <- glue('
+<div class="state-card">
+  <div class="i-head"><span class="chip">State</span></div>
+  <h2>Georgia</h2>
+  <div class="i-sub">{n_counties} counties</div>
+  {paste(state_headlines, collapse = "")}
+</div>')
+
+county_cards <- ga %>%
+  mutate(
+    headline = glue('
+      <div class="for-m" data-m="{id}">
+        <div class="tile"><div class="tile-label">{measure}</div><div class="hero">{fmt(value)}<span>%</span></div><div class="tile-cap">95% CI {fmt(lower)}–{fmt(upper)}</div></div>
+        <div class="duo"><div><span>vs. Georgia</span><b>{diff_text} pts</b><em>Georgia {fmt(avg)}%</em></div><div><span>Rank</span><b>{rank_text}</b><em>of {n_counties} counties</em></div></div>
+      </div>'),
+    bar = glue('
+      <button type="button" class="mrow" data-m="{id}" data-pick="{id}">
+        <span class="mrow-label">{measure}</span><span class="mrow-val">{fmt(value)}%</span>
+        <span class="meter"><i class="fill" style="width:{pct(value / bar_max)}%"></i><i class="ga" style="left:{pct(avg / bar_max)}%"></i></span>
+      </button>')
+  ) %>%
+  group_by(fips, county, adults) %>%
+  summarise(headlines = paste(headline, collapse = ""), bars = paste(bar, collapse = ""), .groups = "drop") %>%
+  glue_data('
+<div class="county-card" data-fips="{fips}">
+  <div class="i-head"><span class="chip">County</span><button type="button" class="x" data-reset aria-label="Back to Georgia">{icons["close"]}</button></div>
+  <h2>{county} County</h2>
+  <div class="i-sub">{comma(adults)} adults</div>
+  {headlines}
+  <div class="rows-head"><b>All measures</b><span class="key"><i></i>Georgia</span></div>
+  {bars}
+</div>')
+
+# ---- Colours: one small set of CSS rules per measure, written from the palettes above ----
+measure_css <- sapply(names(measures), function(id) {
+  p <- palettes[[id]]
+  soft <- rgb(colorRamp(c("#ffffff", p[1]))(0.62), maxColorValue = 255)   # a very light tint for panel backgrounds
+  glue('
+[data-m="{id}"]{{--key:{key_colors[id]};--track:{p[2]}}}
+body[data-measure="{id}"]{{--accent:{key_colors[id]};--accent-ink:{shade(id, 0.95)};--accent-50:{soft};--accent-100:{p[2]};--badge-high:{p[10]};--badge-low:{p[1]};--badge-ring:{p[5]};--ci:{p[5]};--trend:{p[10]};--ramp:linear-gradient(to right,{paste(p, collapse = ",")})}}
+body[data-measure="{id}"] .county{{fill:var(--f-{id})}}')
+})
+
+# ---- The numbers the hover box needs, handed to the page as text (already rounded by R) ----
+county_data <- list(
+  labels   = as.list(measures),
+  counties = lapply(split(ga, ga$fips), function(d) {
+    list(name = d$county[1], v = setNames(unname(Map(c, fmt(d$value), fmt(d$lower), fmt(d$upper))), d$id))
+  })
+)
+
+tagList(
+  tags$link(rel = "stylesheet", `data-external` = "1",
+            href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"),
+  tags$style(HTML(paste(measure_css, collapse = "\n"))),
+  HTML(rail),
+  HTML(glue('<aside class="inspector card">{state_card}{paste(county_cards, collapse = "")}</aside>')),
+  tags$div(id = "tip", class = "tip", hidden = NA),
+  tags$script(id = "county-data", type = "application/json", HTML(toJSON(county_data, auto_unbox = TRUE)))
+)
 ```
 
-### Obesity
+```{js behaviour}
+/* ==================================================================================================
+   Behaviour of the dashboard.
+   R has already worked out every number, colour and position and written it into the page.
+   This script only reacts to the visitor: it switches things on and off, highlights, and zooms.
 
-```{r}
-valueBox(paste0(state_avg("OBESITY"), "%"), caption = "Obesity, Georgia adults", icon = "fa-weight", color = "warning")
+     1. setMeasure()    choose one of the six measures
+     2. selectCounty()  choose a county (or go back to all of Georgia)
+     3. notePage()      remember which page is open (flexdashboard itself switches the pages)
+     4. clicks          on a measure, a county, or a reset button
+     5. hover box       the small dark box that follows the pointer
+     6. search          the "Find a county" box
+     7. table           sort the Data table when a column heading is clicked
+   ================================================================================================== */
+document.addEventListener('DOMContentLoaded', function () {
+  const DATA = JSON.parse(document.getElementById('county-data').textContent);
+  const one = s => document.querySelector(s), all = s => document.querySelectorAll(s);
+  const body = document.body, tip = one('#tip'), hoverOutline = one('#hoverOutline');
+  let measure = 'OBESITY', county = null;
+
+  /* 1. Choose a measure. Everything on the page that belongs to a measure carries data-m="...";
+        the pieces for the chosen measure get the class "on" and the stylesheet does the rest. */
+  function setMeasure(id) {
+    if (body.dataset.page === 'compare' && id === 'FOODINSECU') id = 'OBESITY';   // food insecurity is the x-axis there
+    measure = id;
+    body.dataset.measure = id;
+    all('[data-m]').forEach(el => el.classList.toggle('on', el.dataset.m === id));
+  }
+
+  /* 2. Choose a county. Everything that belongs to a county carries data-fips="..." (its shape on the
+        map, its card, its ranking rows, its dots, its table row); the chosen one gets the class "sel". */
+  function selectCounty(fips) {
+    county = DATA.counties[fips] ? fips : null;
+    body.classList.toggle('has-county', county !== null);
+    all('[data-fips]').forEach(el => el.classList.toggle('sel', el.dataset.fips === county));
+    const shape = county ? one('.county.sel') : null;
+    one('#selCase').setAttribute('d', shape ? shape.getAttribute('d') : '');      // dark outline around the county
+    one('#selLine').setAttribute('d', shape ? shape.getAttribute('d') : '');
+    if (shape) ['cx', 'cy', 'zoom'].forEach(k => body.style.setProperty('--' + k, shape.dataset[k]));   // where to zoom
+    hideTip();
+  }
+
+  /* 3. flexdashboard shows one page at a time; note which one so the layout can adapt. */
+  function notePage() {
+    const open = one('.dashboard-page-wrapper.active');
+    body.dataset.page = open ? open.id : 'overview';
+    all('.pages a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + body.dataset.page));
+    if (body.dataset.page === 'compare' && measure === 'FOODINSECU') setMeasure('OBESITY');
+  }
+  jQuery(document).on('shown.bs.tab', notePage);
+
+  /* 4. Clicks. */
+  document.addEventListener('click', function (e) {
+    const t = e.target;
+    if (t.closest('[data-pick]')) setMeasure(t.closest('[data-pick]').dataset.pick);
+    else if (t.closest('[data-reset]')) selectCounty(null);
+    else if (t.closest('.inspector, .rail')) return;
+    else if (t.closest('[data-fips]')) {
+      const fips = t.closest('[data-fips]').dataset.fips;
+      selectCounty(fips === county ? null : fips);              // clicking the selected county again lets go of it
+    }
+    else if (t.closest('.mapstage')) selectCounty(null);        // click on the empty part of the map
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') selectCounty(null); });
+  document.addEventListener('submit', e => e.preventDefault());
+
+  /* 5. Hover box for a county on the map, a ranking row, or a dot. */
+  function hideTip() { tip.hidden = true; hoverOutline.setAttribute('d', ''); }
+  document.addEventListener('mousemove', function (e) {
+    const el = e.target.closest ? e.target.closest('.county, .rrow, .dot') : null;
+    if (!el) return hideTip();
+    const c = DATA.counties[el.dataset.fips], v = c.v[measure], dot = el.matches('.dot');
+    hoverOutline.setAttribute('d', el.matches('.county:not(.sel)') ? el.getAttribute('d') : '');
+    tip.innerHTML = '<strong>' + c.name + ' County</strong>' +
+      (dot ? '<span>Food insecurity <b>' + c.v.FOODINSECU[0] + '%</b></span>' : '') +
+      '<span>' + DATA.labels[measure] + ' <b>' + v[0] + '%</b></span>' +
+      (dot ? '' : '<small>95% CI ' + v[1] + '–' + v[2] + '</small>');
+    tip.hidden = false;
+    const right = e.clientX + 16 + tip.offsetWidth > innerWidth - 8, low = e.clientY + 16 + tip.offsetHeight > innerHeight - 8;
+    tip.style.left = (right ? e.clientX - 16 - tip.offsetWidth : e.clientX + 16) + 'px';
+    tip.style.top = (low ? e.clientY - 16 - tip.offsetHeight : e.clientY + 16) + 'px';
+  });
+
+  /* 6. Search. R wrote one hidden line per county; typing shows the (at most six) that match. */
+  const q = one('#q'), list = one('.results'), lines = Array.from(list.children);
+  let shown = [], active = 0;
+  function mark(i) { active = i; shown.forEach((li, k) => li.classList.toggle('is-active', k === i)); }
+  function filter() {
+    const text = q.value.trim().toLowerCase();
+    const starts = lines.filter(li => text && li.dataset.name.startsWith(text));
+    const inside = lines.filter(li => text && !starts.includes(li) && li.dataset.name.includes(text));
+    shown = starts.concat(inside).slice(0, 6);
+    lines.forEach(li => { li.hidden = true; });
+    shown.forEach(li => { li.hidden = false; list.appendChild(li); });
+    list.hidden = shown.length === 0;
+    mark(0);
+  }
+  function choose(li) {
+    if (!li) return;
+    q.value = ''; filter(); q.blur();
+    if (body.dataset.page === 'about') FlexDashboardUtils.showPage('#overview');
+    selectCounty(li.dataset.fips);
+    if (body.dataset.page === 'data') one('#dataTable tr.sel').scrollIntoView({ block: 'center' });
+  }
+  q.addEventListener('input', filter);
+  q.addEventListener('focus', filter);
+  q.addEventListener('blur', () => { list.hidden = true; });
+  q.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (shown.length) mark((active + (e.key === 'ArrowDown' ? 1 : -1) + shown.length) % shown.length); }
+    else if (e.key === 'Enter') { e.preventDefault(); choose(shown[active]); }
+    else if (e.key === 'Escape') { e.stopPropagation(); q.value = ''; filter(); q.blur(); }
+  });
+  list.addEventListener('mousedown', e => { e.preventDefault(); choose(e.target.closest('li')); });
+  document.addEventListener('keydown', e => { if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); } });
+
+  /* 7. Sort the Data table. The first click on a number column puts the highest on top. */
+  one('#dataTable thead').addEventListener('click', function (e) {
+    const th = e.target.closest('th[data-col]');
+    if (!th) return;
+    const col = Number(th.dataset.col), tbody = one('#dataTable tbody');
+    const down = th.dataset.dir ? th.dataset.dir === 'up' : col > 0;
+    all('#dataTable th').forEach(h => { delete h.dataset.dir; });
+    th.dataset.dir = down ? 'down' : 'up';
+    Array.from(tbody.rows).sort(function (a, b) {
+      const x = a.cells[col].dataset.v, y = b.cells[col].dataset.v;
+      return (col === 0 ? x.localeCompare(y) : x - y) * (down ? -1 : 1);
+    }).forEach(tr => tbody.appendChild(tr));
+  });
+
+  /* Start with obesity and all of Georgia. */
+  setMeasure('OBESITY');
+  selectCounty(null);
+  notePage();
+});
 ```
 
-### Diabetes
-
-```{r}
-valueBox(paste0(state_avg("DIABETES"), "%"), caption = "Diabetes, Georgia adults", icon = "fa-tint", color = "danger")
-```
-
-### Food insecurity
-
-```{r}
-valueBox(paste0(state_avg("FOODINSECU"), "%"), caption = "Food insecurity, Georgia adults", icon = "fa-shopping-basket", color = "info")
-```
-
-Row {.tabset .tabset-fade}
------------------------------------------------------------------------
-
-### Obesity
-
-```{r}
-make_map("OBESITY")
-```
-
-### Diabetes
-
-```{r}
-make_map("DIABETES")
-```
-
-### High blood pressure
-
-```{r}
-make_map("BPHIGH")
-```
-
-### Physical inactivity
-
-```{r}
-make_map("LPA")
-```
-
-### Food insecurity
-
-```{r}
-make_map("FOODINSECU")
-```
-
-### Coronary heart disease
-
-```{r}
-make_map("CHD")
-```
-
-Row {data-height=230}
------------------------------------------------------------------------
-
-### Key findings
-
-```{r, results = "asis"}
-# For each measure: Georgia value and the counties with the lowest and highest estimates
-for (m in names(measures)) {
-  d  <- filter(ga, id == m)
-  lo <- slice_min(d, value, n = 1, with_ties = FALSE)
-  hi <- slice_max(d, value, n = 1, with_ties = FALSE)
-  cat("- **", measures[m], "**: ", state_avg(m), "% in Georgia, from ", lo$value, "% (",
-      lo$county, ") to ", hi$value, "% (", hi$county, ").\n", sep = "")
-}
-```
-
-Rankings
+Overview {#overview}
 =======================================================================
 
-Row {data-height=45}
+Row
 -----------------------------------------------------------------------
 
 ### {.no-title}
 
-The **15 Georgia counties with the highest prevalence** for each measure. Dots are county estimates, gray lines their 95% confidence intervals, and the dashed line is the Georgia value.
+```{r map}
+# Each county shape carries its six colours (one per measure) and where to zoom when it is clicked
+county_shapes <- shapes %>%
+  left_join(ga %>% group_by(fips) %>% summarise(fills = paste0("--f-", id, ":", fill, collapse = ";")), by = "fips") %>%
+  glue_data('<path class="county" data-fips="{fips}" data-cx="{mid_x}" data-cy="{mid_y}" data-zoom="{zoom}" style="{fills}" d="{path}"/>')
 
-Row {.tabset .tabset-fade data-height=955}
------------------------------------------------------------------------
+# Labels for the 3 highest and 3 lowest counties: a thin line from the county, and a label with an arrow
+label_lines <- labelled %>%
+  group_by(id) %>%
+  summarise(html = paste0(glue(
+    '<line class="co-case" x1="{round(cx, 1)}" y1="{round(cy, 1)}" x2="{round(label_x, 1)}" y2="{round(label_y, 1)}"/>',
+    '<line class="co-line" x1="{round(cx, 1)}" y1="{round(cy, 1)}" x2="{round(label_x, 1)}" y2="{round(label_y, 1)}"/>',
+    '<circle class="co-dot" cx="{round(cx, 1)}" cy="{round(cy, 1)}" r="2.4"/>'), collapse = "")) %>%
+  glue_data('<g class="leaders for-m" data-m="{id}">{html}</g>')
 
-### Obesity
+label_boxes <- labelled %>%
+  group_by(id) %>%
+  summarise(html = paste0(glue(
+    '<button type="button" class="callout {side}" data-fips="{fips}" title="One of the 3 {kind}est counties" ',
+    'style="left:{pct(label_x / map_w)}%;top:{pct(label_y / map_h)}%">{icons[kind]}<b>{county}</b><span>{fmt(value)}%</span></button>'), collapse = "")) %>%
+  glue_data('<div class="callouts for-m" data-m="{id}">{html}</div>')
 
-```{r}
-make_ranking("OBESITY")
+# Legend: where Georgia sits between the lowest and the highest county
+legend_scales <- glue_data(state, '
+  <div class="for-m" data-m="{id}">
+    <div class="lg-scale"><div class="lg-bar"></div><i class="lg-ga" style="left:{pct((avg - lo) / (hi - lo))}%"></i></div>
+    <div class="lg-ends"><span>{fmt(lo)}</span><em style="left:{pct((avg - lo) / (hi - lo))}%">GA {fmt(avg)}</em><span>{fmt(hi)}</span></div>
+  </div>')
+
+HTML(glue('
+<div class="card mapcard" style="--map-ratio:{round(map_w / map_h, 4)}">
+  <header><h1>{measure_titles}</h1><p>Age-adjusted prevalence among adults, by county</p></header>
+  <button type="button" class="back" data-reset>{icons["reset"]}Reset view</button>
+  <div class="mapstage">
+    <div class="mapbox">
+      <svg class="map-svg" viewBox="0 0 {round(map_w, 2)} {round(map_h, 2)}" role="img" aria-label="Map of Georgia counties">
+        <g class="zoom">
+          {paste(county_shapes, collapse = "")}
+          <path id="hoverOutline" class="outline-hover"/><path id="selCase" class="sel-case"/><path id="selLine" class="sel-line"/>
+        </g>
+        {paste(label_lines, collapse = "")}
+      </svg>
+      {paste(label_boxes, collapse = "")}
+    </div>
+  </div>
+  <div class="legend">
+    <div class="lg-title">% of adults</div>
+    {paste(legend_scales, collapse = "")}
+    <div class="lg-key"><span>{icons["high"]}3 highest</span><span>{icons["low"]}3 lowest</span></div>
+  </div>
+  <div class="locator"><div class="loc-map"><svg viewBox="0 0 {round(map_w, 2)} {round(map_h, 2)}"><path d="{state_outline}"/></svg><i></i></div></div>
+</div>'))
 ```
 
-### Diabetes
-
-```{r}
-make_ranking("DIABETES")
-```
-
-### High blood pressure
-
-```{r}
-make_ranking("BPHIGH")
-```
-
-### Physical inactivity
-
-```{r}
-make_ranking("LPA")
-```
-
-### Food insecurity
-
-```{r}
-make_ranking("FOODINSECU")
-```
-
-### Coronary heart disease
-
-```{r}
-make_ranking("CHD")
-```
-
-Food insecurity vs. disease
+Rankings {#rankings}
 =======================================================================
 
 Row
 -----------------------------------------------------------------------
 
-### Food insecurity and obesity
+### {.no-title}
 
-```{r}
-make_scatter("OBESITY")
+```{r rankings}
+# One ranking per measure. Every county is written out in order; the page shows the first 15,
+# plus the selected county if it is further down the list.
+# Dots are county estimates and lines are their 95% confidence intervals.
+rankings <- sapply(names(measures), function(m) {
+  d <- ga %>% filter(id == m) %>% arrange(desc(value), county) %>% mutate(position = row_number())
+  ticks <- pretty(c(min(d$lower), max(d$upper)), n = 7)
+  at <- function(v) pct((v - min(ticks)) / diff(range(ticks)))      # position along the axis, in %
+  rows <- glue_data(d, '
+    <div class="rrow{ifelse(position > 15, " beyond", "")}" data-fips="{fips}">
+      <span class="rk">{from_top}</span><span class="nm">{county}</span>
+      <span class="track"><i class="ci" style="left:{at(lower)}%;width:{round(at(upper) - at(lower), 2)}%"></i><i class="pt" style="left:{at(value)}%"></i></span>
+      <span class="vl">{fmt(value)}%</span>
+    </div>')
+  georgia <- d$avg[1]
+  grid <- glue('<i style="left:{at(ticks)}%"><span>{format(ticks, trim = TRUE)}</span></i>')
+  glue('
+  <div class="rank for-m" data-m="{m}">
+    <div class="rank-top"><b style="left:{at(georgia)}%">Georgia {fmt(georgia)}%</b></div>
+    <div class="rrows">
+      <div class="rank-grid">{paste(grid, collapse = "")}<i class="ga" style="left:{at(georgia)}%"></i></div>
+      {paste(rows, collapse = "")}
+    </div>
+    <div class="rank-axis">Age-adjusted prevalence among adults (%)</div>
+  </div>')
+})
+
+HTML(glue('
+<div class="card page">
+  <header>
+    <div><h1>{measure_titles}</h1><p>The 15 counties with the highest prevalence</p></div>
+    <div class="right pkey"><span><i class="k-dot"></i>Estimate</span><span><i class="k-ci"></i>95% confidence interval</span><span><i class="k-ga"></i>Georgia</span></div>
+  </header>
+  <div class="page-body">{paste(rankings, collapse = "")}</div>
+</div>'))
 ```
 
-### Food insecurity and diabetes
-
-```{r}
-make_scatter("DIABETES")
-```
-
-Row {data-height=120}
------------------------------------------------------------------------
-
-### How to read these charts
-
-Each dot is a Georgia county. The red line is a linear trend and **r** is the Pearson correlation between the two county estimates. These are county-level (ecological) associations: they show where conditions cluster, not that food insecurity causes obesity or diabetes in individuals. The correlations are also high partly by design: PLACES models every measure from the same population characteristics (age, sex, race and ethnicity) and county poverty, so its county estimates tend to move together.
-
-Data
-=======================================================================
-
-### Age-adjusted prevalence among adults (%), by county. Click a column to sort; use the search box to find a county.
-
-```{r}
-wide %>%
-  select(County = county, `Adults (18+)` = adults,
-         Obesity = OBESITY, Diabetes = DIABETES, `High blood pressure` = BPHIGH,
-         `Coronary heart disease` = CHD, `Physical inactivity` = LPA, `Food insecurity` = FOODINSECU) %>%
-  arrange(County) %>%
-  datatable(rownames = FALSE, extensions = "Buttons",
-            options = list(pageLength = 20, dom = "Bfrtip", buttons = c("csv"))) %>%
-  formatRound("Adults (18+)", digits = 0) %>%
-  formatRound(3:8, digits = 1)
-```
-
-About
+Food insecurity vs. disease {#compare}
 =======================================================================
 
 Row
 -----------------------------------------------------------------------
 
-### About this dashboard
+### {.no-title}
 
-**Question.** Where in Georgia are cardiometabolic conditions and food insecurity most common, and do they appear in the same counties?
+```{r compare}
+# Scatter plot: food insecurity (x) against each condition (y), one dot per county.
+# The line is a linear trend (lm) and r is the Pearson correlation between the two county-level estimates.
+conditions <- setdiff(names(measures), "FOODINSECU")
+x <- wide$FOODINSECU
+x_ticks <- pretty(x)
+x_at <- function(v) pct((v - min(x_ticks)) / diff(range(x_ticks)))
 
-**Data.** CDC PLACES: County Data (GIS Friendly Format), 2025 release ([data.cdc.gov, dataset i46a-9kgh](https://data.cdc.gov/d/i46a-9kgh)). PLACES provides model-based estimates for every US county, built from 2023 Behavioral Risk Factor Surveillance System (BRFSS) data and census population data. The six measures refer to adults aged 18 and older: obesity, diagnosed diabetes, high blood pressure, coronary heart disease, no leisure-time physical activity and food insecurity in the past 12 months.
+scatter <- lapply(conditions, function(m) {
+  y <- wide[[m]]
+  y_ticks <- pretty(y)
+  y_at <- function(v) pct((v - min(y_ticks)) / diff(range(y_ticks)))
+  trend <- predict(lm(y ~ x), data.frame(x = range(x_ticks)))        # the trend line at the left and right edge of the plot
+  dots <- glue_data(wide, '<i class="dot{ifelse(x_at(x) > 82, " flip", "")}" data-fips="{fips}" style="left:{x_at(x)}%;bottom:{y_at(y)}%"><span>{county}</span></i>')
+  grid_x <- glue('<i class="gx" style="left:{x_at(x_ticks)}%"><span>{format(x_ticks, trim = TRUE)}</span></i>')
+  grid_y <- glue('<i class="gy" style="bottom:{y_at(y_ticks)}%"><span>{format(y_ticks, trim = TRUE)}</span></i>')
+  list(r = cor(x, y), plot = glue('
+  <div class="scatter for-m" data-m="{m}">
+    <div class="sc-ytitle">{measures[m]} (%)</div>
+    <div class="sc-plot">
+      {paste(grid_x, collapse = "")}{paste(grid_y, collapse = "")}
+      <svg class="sc-trend" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="{round(100 - y_at(trend[1]), 2)}" x2="100" y2="{round(100 - y_at(trend[2]), 2)}"/></svg>
+      {paste(dots, collapse = "")}
+    </div>
+    <div class="sc-xtitle">Food insecurity (%)</div>
+  </div>'))
+})
+names(scatter) <- conditions
 
-**Methods.**
+compare_titles <- paste0(glue('<span class="for-m" data-m="{conditions}">Food insecurity and {tolower(measures[conditions])}</span>'), collapse = "")
+correlations   <- paste0(glue('<span class="for-m" data-m="{conditions}">{formatC(sapply(scatter, function(s) s$r), format = "f", digits = 2)}</span>'), collapse = "")
+
+HTML(glue('
+<div class="card page">
+  <header>
+    <div><h1>{compare_titles}</h1><p>Each dot is a Georgia county</p></div>
+    <div class="right"><div class="stat"><b>r = {correlations}</b><span>Pearson correlation</span></div></div>
+  </header>
+  <div class="page-body">{paste(sapply(scatter, function(s) s$plot), collapse = "")}</div>
+  <p class="readme"><b>How to read this chart.</b> The line is a linear trend and <b>r</b> is the Pearson correlation between the two county estimates. These are county-level (ecological) associations: they show where conditions cluster, not that food insecurity causes these conditions in individuals. The correlations are also high partly by design: PLACES models every measure from the same population characteristics (age, sex, race and ethnicity) and county poverty, so its county estimates tend to move together.</p>
+</div>'))
+```
+
+Data {#data}
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### {.no-title}
+
+```{r data}
+# Every county in one table. Click a column heading to sort.
+# The download button carries the same table as a CSV file, built here.
+measure_cells <- Reduce(paste0, lapply(names(measures), function(m) {
+  glue('<td class="num" data-m="{m}" data-v="{wide[[m]]}">{fmt(wide[[m]])}</td>')
+}))
+table_rows <- glue('<tr data-fips="{wide$fips}"><td data-v="{wide$county}">{wide$county}</td><td class="num" data-v="{wide$adults}">{comma(wide$adults)}</td>{measure_cells}</tr>')
+
+heading <- paste0(
+  '<th data-col="0" data-dir="up"><button type="button">County<span class="arrow"></span></button></th>',
+  '<th class="num" data-col="1"><button type="button">Adults (18+)<span class="arrow"></span></button></th>',
+  paste0(glue_data(state, '<th class="num" data-col="{in_order(id) + 1}" data-m="{id}" data-pick="{id}"><button type="button"><i></i>{measure}<span class="arrow"></span></button></th>'), collapse = ""))
+georgia_row <- paste0('<tr class="ga"><td>Georgia</td><td class="num">', comma(sum(wide$adults)), '</td>',
+                      paste0(glue_data(state, '<td class="num" data-m="{id}">{fmt(avg)}</td>'), collapse = ""), '</tr>')
+
+csv <- wide %>%
+  select(County = county, `Adults (18+)` = adults, all_of(setNames(names(measures), measures))) %>%
+  format_csv()
+csv_link <- gsub("\\s", "", base64_enc(charToRaw(csv)))
+
+HTML(glue('
+<div class="card page">
+  <header>
+    <div><h1>All {n_counties} counties</h1><p>Age-adjusted prevalence among adults (%). Click a column to sort.</p></div>
+    <div class="right"><a class="dl-btn" download="georgia_counties.csv" href="data:text/csv;base64,{csv_link}">{icons["download"]}Download CSV</a></div>
+  </header>
+  <div class="page-body"><div class="table-wrap">
+    <table id="dataTable"><thead><tr>{heading}</tr>{georgia_row}</thead><tbody>{paste(table_rows, collapse = "")}</tbody></table>
+  </div></div>
+</div>'))
+```
+
+About {#about}
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### {.no-title}
+
+::::::: {.card .page}
+
+<header><div><h1>About this dashboard</h1></div></header>
+
+:::::: {.page-body}
+::::: {.about}
+:::: {.about-main}
+
+#### Question
+
+::: {.lead-text}
+Where in Georgia are cardiometabolic conditions and food insecurity most common, and do they appear in the same counties?
+:::
+
+#### Data
+
+CDC PLACES: County Data (GIS Friendly Format), 2025 release ([data.cdc.gov, dataset i46a-9kgh](https://data.cdc.gov/d/i46a-9kgh)). PLACES provides model-based estimates for every US county, built from 2023 Behavioral Risk Factor Surveillance System (BRFSS) data and census population data. The six measures refer to adults aged 18 and older: obesity, diagnosed diabetes, high blood pressure, coronary heart disease, no leisure-time physical activity and food insecurity in the past 12 months.
+
+#### Methods
 
 - I used **age-adjusted prevalence**, so counties with older or younger populations can be compared fairly.
 - Maps and rankings show each county's estimate with its 95% confidence interval.
 - The Georgia value is the average of the 159 county estimates **weighted by each county's adult population**. It is a reference point, not an official state estimate.
 - The scatter plots show Pearson correlations between county estimates.
 
-**Limitations.** PLACES estimates are modeled, not direct survey counts, so small counties have wider confidence intervals. Because every measure is modeled from the same population characteristics and county poverty, estimates for different measures are strongly correlated partly by design. County-level correlations do not show individual-level relationships or causation.
+#### Limitations
 
-**Tools.** R (dplyr, tidyr, ggplot2, plotly, DT) and flexdashboard. County boundaries come from the GeoJSON file published by plotly. The code is on [GitHub](https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia).
+PLACES estimates are modeled, not direct survey counts, so small counties have wider confidence intervals. Because every measure is modeled from the same population characteristics and county poverty, estimates for different measures are strongly correlated partly by design. County-level correlations do not show individual-level relationships or causation.
 
-**Author.** Maria Alvarez-Nuncio, MPH (Global Health, Emory University). [LinkedIn](https://www.linkedin.com/in/maria-alvarez-nuncio) · [Portfolio](https://mariaalvarez95.github.io/)
+#### Tools
+
+R (dplyr, tidyr, readr, jsonlite, htmltools, glue), flexdashboard and JavaScript. County boundaries come from the GeoJSON file published by plotly. The code is on [GitHub](https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia).
+
+#### Author
+
+Maria Alvarez-Nuncio, MPH (Global Health, Emory University). [LinkedIn](https://www.linkedin.com/in/maria-alvarez-nuncio) · [Portfolio](https://mariaalvarez95.github.io/)
+
+::::
+:::::
+::::::
+:::::::
