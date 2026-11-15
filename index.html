@@ -10,8 +10,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500&display=swap">
 <style>
 :root{
-  --bg:#0b0b0a; --fg:#ece8df; --fg-2:#b9b5ab; --dim:#7d796f; --rule:#2a2925; --sig:#ff5a1f;
-  --hud:rgba(11,11,10,.72); --key-bg:rgba(11,11,10,.6); --hover:rgba(236,232,223,.05); --lead:#45433d;
+  --bg:#f6f8fb; --fg:#0f2137; --fg-2:#46566b; --dim:#5f6e83; --rule:#dbe2ea; --sig:#1d5fd6;
+  --hud:rgba(246,248,251,.72); --key-bg:rgba(246,248,251,.6); --hover:rgba(15,33,55,.04); --lead:#c3cdd9;
   --serif:'Instrument Serif', Georgia, serif;
   --sans:'Schibsted Grotesk', system-ui, sans-serif;
   --mono:'IBM Plex Mono', ui-monospace, monospace;
@@ -35,8 +35,11 @@ a{color:inherit;text-decoration:none}
 .bar nav a:hover{color:var(--sig)}
 .bar nav a span{color:var(--dim)}
 /* hero */
-.hero{position:relative;height:68svh;min-height:500px;overflow:hidden;border-bottom:1px solid var(--rule)}
-.hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero{position:relative;height:68svh;min-height:500px;--tail:clamp(300px,52svh,540px)}
+/* the canvas runs on below the hero and fades out, so the dots have no hard edge */
+.hero canvas{position:absolute;left:0;top:0;width:100%;height:calc(100% + var(--tail));display:block;pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 calc(100% - var(--tail)),transparent);mask-image:linear-gradient(#000 calc(100% - var(--tail)),transparent)}
+.sec{position:relative}
 .hud{position:absolute;color:var(--fg-2);line-height:1.8;pointer-events:none;background:var(--hud);padding:2px 8px}
 .hud b{color:var(--fg);font-weight:500}
 .hud.tl{top:18px;left:var(--gut)}
@@ -212,42 +215,60 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 
 <script>
 const FS = `precision highp float;
-uniform vec2 u_res; uniform float u_time; uniform vec2 u_mouse; uniform float u_mstr;
+uniform vec2 u_res; uniform float u_time; uniform vec2 u_mouse; uniform float u_mstr; uniform vec4 u_box[5]; uniform float u_hero;
 vec2 g2(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy) * 2. - 1.; }
 float h12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float gn(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); vec2 u = f*f*f*(f*(f*6.-15.)+10.);
   float a = dot(g2(i), f), b = dot(g2(i+vec2(1.,0.)), f-vec2(1.,0.));
   float c = dot(g2(i+vec2(0.,1.)), f-vec2(0.,1.)), d = dot(g2(i+vec2(1.,1.)), f-vec2(1.,1.));
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y); }
-float caust(vec2 p, float t){
-  vec2 w = vec2(gn(p * .55 + vec2(0., t * .30)), gn(p * .55 + vec2(5.2, 1.3) - vec2(t * .26, 0.)));
-  p += w * 1.6;
-  float n1 = gn(p + vec2(t * .22, -t * .14));
-  float n2 = gn(p * 1.85 + vec2(-t * .18, t * .27) + 7.3);
-  float c1 = pow(1. - min(abs(n1) * 2.4, 1.), 8.);
-  float c2 = pow(1. - min(abs(n2) * 2.6, 1.), 10.);
-  return c1 * .85 + c2 * .6 + c1 * c2 * 1.5;
+// a slow, drifting field of high and low values (0..1): the "hotspots" the dots draw
+float field(vec2 p, float t){
+  vec2 w = vec2(gn(p * .5 + vec2(0., t * .22)), gn(p * .5 + vec2(5.2, 1.3) - vec2(t * .18, 0.)));
+  p += w * 1.1;
+  float n = gn(p + vec2(t * .10, -t * .07)) * .68 + gn(p * 2.1 + vec2(-t * .09, t * .12) + 7.3) * .32;
+  return smoothstep(-.36, .42, n);
 }
+// 0 on the text, rising to 1 a little way off it (u_box holds where each piece of text sits)
+float offText(vec2 p){
+  float d = 9.;
+  for (int i = 0; i < 5; i++){ vec2 o = max(max(u_box[i].xy - p, p - u_box[i].zw), 0.); d = min(d, length(o)); }
+  return smoothstep(.03, .32, d);
+}
+// how much room there is for the lively dots at p: none on the text, and they die away at the bottom of the hero
+float room(vec2 p){ return offText(p) * smoothstep(-.1, .22, p.y); }
 void main(){
-  vec2 uv = gl_FragCoord.xy / u_res.y;
-  vec2 q = gl_FragCoord.xy / u_res;
-  vec2 m = u_mouse / u_res.y;
   float t = u_time * .5;
-  vec2 d = uv - m; float dl = length(d);
-  vec2 dir = d / max(dl, .0001);
-  vec2 p = uv * 3. + dir * sin(dl * 46. - u_time * 5.) * .05 * exp(-dl * 6.) * u_mstr;
-  float off = .016;
-  vec3 c = vec3(caust(p + vec2(off, off * .5), t), caust(p, t), caust(p - vec2(off, off * .5), t));
-  c = min(c, vec3(1.3));
-  float lf = gn(uv * 1.1 + vec2(u_time * .02, 0.)) * .5 + .5;
-  // keep the water dim behind the headline: bottom-left on wide screens, bottom on tall ones
-  float wide = smoothstep(.15, .8, q.x + (q.y - .4) * .7);
-  float tall = smoothstep(.3, .75, q.y);
-  float mask = mix(.28, 1., u_res.x > u_res.y ? wide : tall);
-  vec3 base = vec3(.043, .043, .039) + vec3(0., .014, .02) * lf;
-  vec3 col = base + vec3(1., .88, .76) * c * .44 * mask;
-  col += vec3(1., .353, .122) * pow(c.g, 3.) * .1 * mask;
-  col += (h12(gl_FragCoord.xy) - .5) * .02;
+  float rows = 28.;
+  // positions are in hero heights from the hero's bottom-left corner; the canvas runs on below the hero (y < 0)
+  vec2 low = vec2(0., u_res.y - u_hero);
+  vec2 uv = (gl_FragCoord.xy - low) / u_hero;
+  vec2 g = uv * rows;
+  // the dots sit on a staggered grid, like a dot map: find the nearest one
+  vec2 s = vec2(1., 1.7320508);
+  vec2 a = mod(g, s) - s * .5;
+  vec2 b = mod(g - s * .5, s) - s * .5;
+  vec2 gv = dot(a, a) < dot(b, b) ? a : b;
+  vec2 c = (g - gv) / rows;
+  // value of this dot: the drifting field, a little variation from dot to dot, and a swell around the pointer
+  float f = field(c * 2.3, t);
+  f += (h12(floor(vec2((g.x - gv.x) * 2., (g.y - gv.y) / .8660254) + .5)) - .5) * .12;
+  float space = room(c);
+  float dl = length(c - (u_mouse - low) / u_hero);
+  float swell = (exp(-dl * dl * 38.) * .5 + sin(dl * 40. - u_time * 4.) * .1 * exp(-dl * 5.)) * u_mstr;
+  f = clamp(clamp(f, 0., 1.) * space + swell * (.3 + .7 * space), 0., 1.);
+  // bigger and deeper blue where the value is higher. Where it is zero a faint dot is left (fainter still
+  // on the text), so the grid carries on behind the text and below the hero
+  float r = mix(.05, .4, f);
+  float aa = rows / u_hero * .8;
+  float dotm = (1. - smoothstep(r - aa, r + aa, length(gv))) * mix(mix(.5, 1., offText(c)), 1., smoothstep(0., .1, f));
+  vec3 ink = mix(vec3(.84, .885, .955), vec3(.74, .83, .96), smoothstep(0., .08, f));
+  ink = mix(ink, vec3(.114, .373, .839), smoothstep(.02, .62, f));
+  ink = mix(ink, vec3(.07, .227, .549), smoothstep(.7, 1., f));
+  // page colour, with a soft blue wash under the busiest areas
+  float wash = field(uv * 2.3, t) * room(uv);
+  vec3 col = mix(vec3(.965, .973, .984), vec3(.84, .9, .98), wash * .45);
+  col = mix(col, ink, dotm);
   gl_FragColor = vec4(col, 1.);
 }`;
 
@@ -263,20 +284,33 @@ function startShader(canvas, fs, opts = {}) {
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-  const u = {}; ['u_res', 'u_time', 'u_mouse', 'u_mstr'].forEach(n => u[n] = gl.getUniformLocation(prog, n));
+  const u = {}; ['u_res', 'u_time', 'u_mouse', 'u_mstr', 'u_box', 'u_hero'].forEach(n => u[n] = gl.getUniformLocation(prog, n));
+  // the hero the canvas belongs to: the canvas can be taller than it and run on below
+  const target = opts.target || canvas;
+  // where each piece of text sits in the hero (in hero heights, from its bottom-left), so the dots keep clear of it
+  const boxes = new Float32Array(20), range = document.createRange();
+  function measure() {
+    const r = target.getBoundingClientRect(); boxes.fill(-9);
+    Array.from(opts.clear || []).slice(0, 5).forEach((el, i) => {
+      range.selectNodeContents(el); const b = range.getBoundingClientRect();
+      boxes.set([(b.left - r.left) / r.height, (r.bottom - b.bottom) / r.height, (b.right - r.left) / r.height, (r.bottom - b.top) / r.height], i * 4);
+    });
+  }
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const m = { x: .5, y: .5, tx: .5, ty: .5, s: 0, ts: 0 };
-  let W = 1, H = 1, t = opts.t0 || 0, last = 0, running = false, visible = true;
+  let W = 1, H = 1, HH = 1, t = opts.t0 || 0, last = 0, running = false, visible = true;
   function draw() {
     const k = reduce ? 1 : .12;
     m.x += (m.tx - m.x) * k; m.y += (m.ty - m.y) * k; m.s += (m.ts - m.s) * (reduce ? 1 : .04);
-    gl.uniform2f(u.u_res, W, H); gl.uniform1f(u.u_time, t);
-    gl.uniform2f(u.u_mouse, m.x * W, m.y * H); gl.uniform1f(u.u_mstr, m.s);    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.uniform2f(u.u_res, W, H); gl.uniform1f(u.u_hero, HH); gl.uniform1f(u.u_time, t);
+    gl.uniform2f(u.u_mouse, m.x * W, m.y * H); gl.uniform1f(u.u_mstr, m.s); gl.uniform4fv(u.u_box, boxes);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   function resize() {
     const r = canvas.getBoundingClientRect(), k = Math.min(window.devicePixelRatio || 1, 1.5);
     W = Math.max(1, Math.round(r.width * k)); H = Math.max(1, Math.round(r.height * k));
-    canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H); draw();
+    HH = Math.max(1, Math.round(target.getBoundingClientRect().height * k));
+    canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H); measure(); draw();
   }
   function frame(now) {
     if (!visible || document.hidden) { running = false; return; }
@@ -284,20 +318,23 @@ function startShader(canvas, fs, opts = {}) {
     draw(); requestAnimationFrame(frame);
   }
   function kick() { if (reduce || running || !visible || document.hidden) return; running = true; last = 0; requestAnimationFrame(frame); }
-  const target = opts.target || canvas;
   target.addEventListener('pointermove', e => {
     const r = canvas.getBoundingClientRect();
     m.tx = (e.clientX - r.left) / r.width; m.ty = 1 - (e.clientY - r.top) / r.height; m.ts = 1;
     if (reduce) draw();
   });
   target.addEventListener('pointerleave', () => { m.ts = 0; if (reduce) draw(); });
+  // the text moves when the web fonts arrive and while the headline animates in
+  target.addEventListener('animationend', () => { measure(); draw(); });
+  if (document.fonts) document.fonts.ready.then(() => { measure(); draw(); });
   new IntersectionObserver(es => { visible = es[0].isIntersecting; kick(); }).observe(canvas);
   new ResizeObserver(resize).observe(canvas);
   document.addEventListener('visibilitychange', kick);
   resize(); kick();
 }
 
-startShader(document.getElementById('gl'), FS, { target: document.getElementById('hero'), t0: 20 });
+startShader(document.getElementById('gl'), FS, { target: document.getElementById('hero'), t0: 20,
+  clear: document.querySelectorAll('.hero-copy .role, .hero-copy h1 span, .hero-copy h1 em, .hero-copy .sub, .hero-copy .cta') });
 
 </script>
 </body>
