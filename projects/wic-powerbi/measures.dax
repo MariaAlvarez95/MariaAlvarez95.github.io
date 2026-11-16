@@ -1,0 +1,207 @@
+// =====================================================================
+// WIC Power BI dashboard: calendar table and measures
+// Copy each block into Power BI: Modeling > New table (Calendar) or
+// Home > New measure (everything else). One block per measure.
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// CALENDAR TABLE  (Modeling > New table)
+// One row per day from the first to the last month in the data.
+// USDA's fiscal year runs October to September: October 2024 is FY 2025.
+// ---------------------------------------------------------------------
+Calendar =
+ADDCOLUMNS(
+    CALENDAR(MIN(WIC_Monthly[Month]), EOMONTH(MAX(WIC_Monthly[Month]), 0)),
+    "Month Start", DATE(YEAR([Date]), MONTH([Date]), 1),
+    "Fiscal Year", YEAR([Date]) + IF(MONTH([Date]) >= 10, 1, 0),
+    "FY Label", "FY " & (YEAR([Date]) + IF(MONTH([Date]) >= 10, 1, 0))
+)
+
+
+// ---------------------------------------------------------------------
+// BASE MEASURES  (table _Measures)
+// Named "Total ..." so no measure has the same name as a column.
+// ---------------------------------------------------------------------
+
+// Sum of participants over the months in view (a participant counted once per month)
+Participant Months = SUM(WIC_Monthly[Participants])
+
+Total Food Cost = SUM(WIC_Monthly[Food Cost])
+
+Total Rebates = SUM(WIC_Monthly[Rebates])
+
+// NSA = nutrition services and administration, reported once per fiscal year
+Total NSA Cost = SUM(WIC_NSA[NSA Cost])
+
+
+// ---------------------------------------------------------------------
+// PARTICIPATION
+// ---------------------------------------------------------------------
+
+// Participation is a monthly count, so a year is the AVERAGE of its months, not the sum
+Avg Monthly Participants =
+AVERAGEX(
+    VALUES('Calendar'[Month Start]),
+    [Participant Months]
+)
+
+Avg Monthly Women =
+AVERAGEX(VALUES('Calendar'[Month Start]), CALCULATE(SUM(WIC_Monthly[Women])))
+
+Avg Monthly Infants =
+AVERAGEX(VALUES('Calendar'[Month Start]), CALCULATE(SUM(WIC_Monthly[Infants])))
+
+Avg Monthly Children =
+AVERAGEX(VALUES('Calendar'[Month Start]), CALCULATE(SUM(WIC_Monthly[Children])))
+
+// Share of WIC infants who receive no infant formula from WIC
+Infants Fully Breastfed % =
+DIVIDE(SUM(WIC_Monthly[Infants Fully Breastfed]), SUM(WIC_Monthly[Infants]))
+
+
+// ---------------------------------------------------------------------
+// COSTS
+// ---------------------------------------------------------------------
+
+Total Program Cost = [Total Food Cost] + [Total NSA Cost]
+
+// USDA's "average monthly food cost per person" (the benefit per month)
+Food Cost per Participant = DIVIDE([Total Food Cost], [Participant Months])
+
+NSA per Participant = DIVIDE([Total NSA Cost], [Participant Months])
+
+Rebates % of Food Cost = DIVIDE([Total Rebates], [Total Food Cost])
+
+
+// ---------------------------------------------------------------------
+// SAME PERIOD OF THE PREVIOUS YEAR
+// Works only after Calendar is marked as a date table.
+// ---------------------------------------------------------------------
+
+Avg Monthly Participants PY =
+CALCULATE([Avg Monthly Participants], SAMEPERIODLASTYEAR('Calendar'[Date]))
+
+Participants YoY % =
+DIVIDE(
+    [Avg Monthly Participants] - [Avg Monthly Participants PY],
+    [Avg Monthly Participants PY]
+)
+
+Food Cost per Participant PY =
+CALCULATE([Food Cost per Participant], SAMEPERIODLASTYEAR('Calendar'[Date]))
+
+Food Cost per Participant YoY % =
+DIVIDE(
+    [Food Cost per Participant] - [Food Cost per Participant PY],
+    [Food Cost per Participant PY]
+)
+
+
+// ---------------------------------------------------------------------
+// COMPARISONS WITH THE U.S. AND OTHER STATES
+// ---------------------------------------------------------------------
+
+// The same measure for all WIC agencies, ignoring any agency filter
+US Food Cost per Participant =
+CALCULATE([Food Cost per Participant], REMOVEFILTERS(Agencies))
+
+Georgia Food Cost per Participant =
+CALCULATE([Food Cost per Participant], Agencies[Agency] = "Georgia")
+
+// 1 = highest food cost per participant among the agencies shown in the visual.
+// The table also shows each agency's region, so the region goes into ALLSELECTED too;
+// otherwise each row would be ranked only against the agencies in its own region.
+Food Cost per Participant Rank =
+IF(
+    ISINSCOPE(Agencies[Agency]),
+    RANKX(
+        ALLSELECTED(Agencies[Agency], Agencies[USDA Region]),
+        [Food Cost per Participant], , DESC
+    )
+)
+
+Georgia Cost Rank =
+VAR GeorgiaValue =
+    CALCULATE([Food Cost per Participant], Agencies[Agency] = "Georgia")
+VAR StatesAbove =
+    FILTER(ALLSELECTED(Agencies[Agency]), [Food Cost per Participant] > GeorgiaValue)
+RETURN
+    COUNTROWS(StatesAbove) + 1
+
+// "18 of 51": counts only the agencies that have a value under the page filters
+// (the 50 states and DC on the Georgia vs. states page). COUNTROWS(ALLSELECTED(...))
+// alone gave 89 in the card: the page filter is on Agency Type, not on Agency.
+Georgia Cost Rank Label =
+VAR AgenciesRanked =
+    FILTER(ALLSELECTED(Agencies[Agency]), NOT ISBLANK([Food Cost per Participant]))
+RETURN
+    [Georgia Cost Rank] & " of " & COUNTROWS(AgenciesRanked)
+
+
+// ---------------------------------------------------------------------
+// KEY FINDING
+// One sentence that states the result for whatever is selected, e.g.
+// "Participation grew 5.9% vs. the same months last year (U.S. +2.4%), to 245,210 a month.
+//  Food cost per participant was $63.16 a month, below the U.S. figure of $64.89."
+// ---------------------------------------------------------------------
+Key Finding =
+VAR OneAgency = ISFILTERED(Agencies[Agency])
+VAR Participants = [Avg Monthly Participants]
+VAR Change = [Participants YoY %]
+VAR USChange = CALCULATE([Participants YoY %], REMOVEFILTERS(Agencies))
+VAR FoodCost = [Food Cost per Participant]
+VAR USFoodCost = [US Food Cost per Participant]
+VAR ParticipationText =
+    IF(
+        ISBLANK(Change),
+        "Participation averaged " & FORMAT(Participants, "#,0", "en-US") & " a month",
+        "Participation " & IF(Change >= 0, "grew ", "fell ") & FORMAT(ABS(Change), "0.0%", "en-US")
+            & " vs. the same months last year"
+            & IF(OneAgency, " (U.S. " & FORMAT(USChange, "+0.0%;-0.0%;0.0%", "en-US") & ")")
+            & ", to " & FORMAT(Participants, "#,0", "en-US") & " a month"
+    )
+VAR CostText =
+    "Food cost per participant was " & FORMAT(FoodCost, "$#,0.00", "en-US") & " a month"
+        & IF(
+            OneAgency,
+            ", " & IF(FoodCost > USFoodCost, "above", "below") & " the U.S. figure of "
+                & FORMAT(USFoodCost, "$#,0.00", "en-US")
+        )
+RETURN
+    IF(
+        HASONEVALUE('Calendar'[FY Label]),
+        ParticipationText & ". " & CostText & ".",
+        "Choose one fiscal year to see the key finding."
+    )
+
+
+// ---------------------------------------------------------------------
+// LABELS AND COLORS
+// ---------------------------------------------------------------------
+
+// Title that says what the page is showing, e.g. "Georgia | FY 2025"
+Selection Label =
+VAR AreaName =
+    IF(
+        ISFILTERED(Agencies[Agency]),
+        SELECTEDVALUE(Agencies[Agency], "Several agencies"),
+        "All WIC agencies (U.S.)"
+    )
+VAR YearName = SELECTEDVALUE('Calendar'[FY Label], "All fiscal years")
+VAR MonthsShown = COUNTROWS(VALUES('Calendar'[Month Start]))
+VAR PartialYear =
+    IF(
+        HASONEVALUE('Calendar'[FY Label]) && MonthsShown < 12,
+        " (first " & MonthsShown & " months, preliminary)"
+    )
+RETURN
+    AreaName & " | " & YearName & PartialYear
+
+// Bar color: blue for Georgia, gray for every other agency
+Highlight Georgia =
+IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#2E6DA4", "#C5CBD3")
+
+// Row color in tables: light blue for Georgia, no color for the rest
+Highlight Georgia Row =
+IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#DCE8F4")

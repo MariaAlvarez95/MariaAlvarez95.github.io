@@ -1,0 +1,16 @@
+relationship 2747d948-dcaf-5fd2-b1ec-344e2b4c8600
+	fromColumn: WIC_Monthly.Month
+	toColumn: Calendar.Date
+
+relationship 8351d941-5c3c-57fc-a4af-c51d1fb6667c
+	fromColumn: WIC_NSA.'FY Start'
+	toColumn: Calendar.Date
+
+relationship 6675c2bd-0d4f-58ad-a1ed-a6fa83bbf681
+	fromColumn: WIC_Monthly.Agency
+	toColumn: Agencies.Agency
+
+relationship 3d174348-edc1-5d6e-94d7-500dddb1551e
+	fromColumn: WIC_NSA.Agency
+	toColumn: Agencies.Agency
+

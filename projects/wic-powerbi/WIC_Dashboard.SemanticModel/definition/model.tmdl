@@ -1,0 +1,22 @@
+model Model
+	culture: es-MX
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: es-MX
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["WIC_Monthly", "WIC_NSA", "Agencies", "_Measures"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table _Measures
+ref table WIC_Monthly
+ref table WIC_NSA
+ref table Agencies
+ref table Calendar
+
+ref cultureInfo es-MX
+

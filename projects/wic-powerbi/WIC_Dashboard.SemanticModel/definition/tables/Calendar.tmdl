@@ -1,0 +1,53 @@
+table Calendar
+	lineageTag: 97b5ec11-2d11-5747-b261-7ae580710fbf
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: Long Date
+		lineageTag: 28dddaba-6762-580e-8cdb-acc9f9149138
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Month Start'
+		formatString: mmm yyyy
+		lineageTag: e9ff35f3-a107-5b92-a1ef-7acb27afe935
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month Start]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fiscal Year'
+		formatString: 0
+		lineageTag: 8af8121b-e2a9-5ceb-99ed-0ac8136ec458
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Fiscal Year]
+
+		annotation SummarizationSetBy = User
+
+	column 'FY Label'
+		lineageTag: b95257bc-af62-53ed-9666-ba0c90911ff7
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [FY Label]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calendar = calculated
+		mode: import
+		source =
+				ADDCOLUMNS(
+				    CALENDAR(MIN(WIC_Monthly[Month]), EOMONTH(MAX(WIC_Monthly[Month]), 0)),
+				    "Month Start", DATE(YEAR([Date]), MONTH([Date]), 1),
+				    "Fiscal Year", YEAR([Date]) + IF(MONTH([Date]) >= 10, 1, 0),
+				    "FY Label", "FY " & (YEAR([Date]) + IF(MONTH([Date]) >= 10, 1, 0))
+				)
+

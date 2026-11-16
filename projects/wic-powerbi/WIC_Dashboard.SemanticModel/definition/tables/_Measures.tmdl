@@ -1,0 +1,185 @@
+table _Measures
+	lineageTag: 7d5969d6-5a52-5ac3-8efa-5e3ffa2ae9a5
+
+	measure 'Participant Months' = SUM(WIC_Monthly[Participants])
+		formatString: #,0
+		lineageTag: 62ca061e-2542-5fa2-a7e5-e955392f2d12
+
+	measure 'Total Food Cost' = SUM(WIC_Monthly[Food Cost])
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: 7db5945a-8104-58dc-aabd-97c14e24e298
+
+	measure 'Total Rebates' = SUM(WIC_Monthly[Rebates])
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: 6b559b5c-17e5-54ca-ba50-6c61c7981114
+
+	measure 'Total NSA Cost' = SUM(WIC_NSA[NSA Cost])
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: e633b430-ab6d-5912-8de1-66c4ea5760bd
+
+	measure 'Avg Monthly Participants' =
+			AVERAGEX(
+			    VALUES('Calendar'[Month Start]),
+			    [Participant Months]
+			)
+		formatString: #,0
+		lineageTag: b05c12cd-ff84-5b46-8e77-836c065045dc
+
+	measure 'Avg Monthly Women' = AVERAGEX(VALUES('Calendar'[Month Start]), CALCULATE(SUM(WIC_Monthly[Women])))
+		formatString: #,0
+		lineageTag: e7e4bc56-cfb6-5f45-a979-6877c8bd4b5b
+
+	measure 'Avg Monthly Infants' = AVERAGEX(VALUES('Calendar'[Month Start]), CALCULATE(SUM(WIC_Monthly[Infants])))
+		formatString: #,0
+		lineageTag: 22881bf4-7e2f-59f8-a601-f3f1246ae945
+
+	measure 'Avg Monthly Children' = AVERAGEX(VALUES('Calendar'[Month Start]), CALCULATE(SUM(WIC_Monthly[Children])))
+		formatString: #,0
+		lineageTag: 805194db-0529-53b9-ab51-8a88c40a55e5
+
+	measure 'Infants Fully Breastfed %' = DIVIDE(SUM(WIC_Monthly[Infants Fully Breastfed]), SUM(WIC_Monthly[Infants]))
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: 9771bf18-42e7-5309-baf6-3b7cdd6de114
+
+	measure 'Total Program Cost' = [Total Food Cost] + [Total NSA Cost]
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: 7112b606-b45b-5027-a3b1-b9b551f3a729
+
+	measure 'Food Cost per Participant' = DIVIDE([Total Food Cost], [Participant Months])
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 271c1698-0007-5bdb-afc3-94927b605060
+
+	measure 'NSA per Participant' = DIVIDE([Total NSA Cost], [Participant Months])
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 7c02e19f-7f4b-5753-9b52-a7f2efda3455
+
+	measure 'Rebates % of Food Cost' = DIVIDE([Total Rebates], [Total Food Cost])
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: f3d32545-cf78-5f90-b78b-2d87d5ffc4d4
+
+	measure 'Avg Monthly Participants PY' = CALCULATE([Avg Monthly Participants], SAMEPERIODLASTYEAR('Calendar'[Date]))
+		formatString: #,0
+		lineageTag: bc5f4c3c-83cc-510b-b8fc-b3999f561102
+
+	measure 'Participants YoY %' =
+			DIVIDE(
+			    [Avg Monthly Participants] - [Avg Monthly Participants PY],
+			    [Avg Monthly Participants PY]
+			)
+		formatString: +0.0%;-0.0%;0.0%
+		lineageTag: cd1ce07f-8698-5d14-bc63-2988bde03f01
+
+	measure 'Food Cost per Participant PY' = CALCULATE([Food Cost per Participant], SAMEPERIODLASTYEAR('Calendar'[Date]))
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 17410d3f-9ce9-5fac-b48b-b2d9d9d71850
+
+	measure 'Food Cost per Participant YoY %' =
+			DIVIDE(
+			    [Food Cost per Participant] - [Food Cost per Participant PY],
+			    [Food Cost per Participant PY]
+			)
+		formatString: +0.0%;-0.0%;0.0%
+		lineageTag: bb807dc2-8e94-539f-8f08-ee043de8d96f
+
+	measure 'US Food Cost per Participant' = CALCULATE([Food Cost per Participant], REMOVEFILTERS(Agencies))
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 40384413-a78a-55cc-9a52-60e6de6c06c2
+
+	measure 'Georgia Food Cost per Participant' = CALCULATE([Food Cost per Participant], Agencies[Agency] = "Georgia")
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 94fbe8b3-dc06-5d4d-b19b-0b83fec7ae6d
+
+	measure 'Food Cost per Participant Rank' =
+			IF(
+			    ISINSCOPE(Agencies[Agency]),
+			    RANKX(
+			        ALLSELECTED(Agencies[Agency], Agencies[USDA Region]),
+			        [Food Cost per Participant], , DESC
+			    )
+			)
+		formatString: 0
+		lineageTag: 5480ac62-a33c-560b-ad74-4e1183997abe
+
+	measure 'Georgia Cost Rank' =
+			VAR GeorgiaValue =
+			    CALCULATE([Food Cost per Participant], Agencies[Agency] = "Georgia")
+			VAR StatesAbove =
+			    FILTER(ALLSELECTED(Agencies[Agency]), [Food Cost per Participant] > GeorgiaValue)
+			RETURN
+			    COUNTROWS(StatesAbove) + 1
+		formatString: 0
+		lineageTag: b72d9f29-46e8-5137-86ff-dc4a368ef072
+
+	measure 'Georgia Cost Rank Label' =
+			VAR AgenciesRanked =
+			    FILTER(ALLSELECTED(Agencies[Agency]), NOT ISBLANK([Food Cost per Participant]))
+			RETURN
+			    [Georgia Cost Rank] & " of " & COUNTROWS(AgenciesRanked)
+		lineageTag: d7c693f4-0254-5ce8-9e64-29c95d2e04c3
+
+	measure 'Selection Label' =
+			VAR AreaName =
+			    IF(
+			        ISFILTERED(Agencies[Agency]),
+			        SELECTEDVALUE(Agencies[Agency], "Several agencies"),
+			        "All WIC agencies (U.S.)"
+			    )
+			VAR YearName = SELECTEDVALUE('Calendar'[FY Label], "All fiscal years")
+			VAR MonthsShown = COUNTROWS(VALUES('Calendar'[Month Start]))
+			VAR PartialYear =
+			    IF(
+			        HASONEVALUE('Calendar'[FY Label]) && MonthsShown < 12,
+			        " (first " & MonthsShown & " months, preliminary)"
+			    )
+			RETURN
+			    AreaName & " | " & YearName & PartialYear
+		lineageTag: c584641a-e719-5b24-91a2-ac5d91a3a7ad
+
+	measure 'Highlight Georgia' = IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#2E6DA4", "#C5CBD3")
+		lineageTag: 2a22de99-8fb4-5f43-bcf5-a18f728bb59f
+
+	measure 'Highlight Georgia Row' = IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#DCE8F4")
+		lineageTag: 891e7944-0c6c-5959-9b18-bb2da7af07b3
+
+	measure 'Key Finding' =
+			VAR OneAgency = ISFILTERED(Agencies[Agency])
+			VAR Participants = [Avg Monthly Participants]
+			VAR Change = [Participants YoY %]
+			VAR USChange = CALCULATE([Participants YoY %], REMOVEFILTERS(Agencies))
+			VAR FoodCost = [Food Cost per Participant]
+			VAR USFoodCost = [US Food Cost per Participant]
+			VAR ParticipationText =
+			    IF(
+			        ISBLANK(Change),
+			        "Participation averaged " & FORMAT(Participants, "#,0", "en-US") & " a month",
+			        "Participation " & IF(Change >= 0, "grew ", "fell ") & FORMAT(ABS(Change), "0.0%", "en-US")
+			            & " vs. the same months last year"
+			            & IF(OneAgency, " (U.S. " & FORMAT(USChange, "+0.0%;-0.0%;0.0%", "en-US") & ")")
+			            & ", to " & FORMAT(Participants, "#,0", "en-US") & " a month"
+			    )
+			VAR CostText =
+			    "Food cost per participant was " & FORMAT(FoodCost, "$#,0.00", "en-US") & " a month"
+			        & IF(
+			            OneAgency,
+			            ", " & IF(FoodCost > USFoodCost, "above", "below") & " the U.S. figure of "
+			                & FORMAT(USFoodCost, "$#,0.00", "en-US")
+			        )
+			RETURN
+			    IF(
+			        HASONEVALUE('Calendar'[FY Label]),
+			        ParticipationText & ". " & CostText & ".",
+			        "Choose one fiscal year to see the key finding."
+			    )
+		lineageTag: 39af2687-1e34-525e-bce0-b32297655db1
+
+	partition _Measures = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [Column1 = text], {}),
+				    #"Removed Columns" = Table.RemoveColumns(Source,{"Column1"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_ResultType = Table
+

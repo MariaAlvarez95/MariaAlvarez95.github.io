@@ -1,0 +1,146 @@
+table WIC_Monthly
+	lineageTag: 69aeb144-2593-549a-9567-f7766fca3557
+
+	column Agency
+		dataType: string
+		isHidden
+		lineageTag: 4810d564-ff79-5def-852e-69ea6cd31f79
+		summarizeBy: none
+		sourceColumn: Agency
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 94300cea-b516-5cef-bb52-125401e63300
+		summarizeBy: none
+		sourceColumn: Month
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Pregnant
+		dataType: int64
+		formatString: 0
+		lineageTag: 9e894eb0-3e2d-53fb-a4b0-9f369a0240d6
+		summarizeBy: sum
+		sourceColumn: Pregnant
+
+		annotation SummarizationSetBy = Automatic
+
+	column Breastfeeding
+		dataType: int64
+		formatString: 0
+		lineageTag: dab8e20e-870b-5b63-85b4-96313af87f20
+		summarizeBy: sum
+		sourceColumn: Breastfeeding
+
+		annotation SummarizationSetBy = Automatic
+
+	column Postpartum
+		dataType: int64
+		formatString: 0
+		lineageTag: 95bafb22-d15c-55eb-a3c0-4739ba37684d
+		summarizeBy: sum
+		sourceColumn: Postpartum
+
+		annotation SummarizationSetBy = Automatic
+
+	column Women
+		dataType: int64
+		formatString: 0
+		lineageTag: df38d273-96bb-5794-b3cc-d5effc706d2d
+		summarizeBy: sum
+		sourceColumn: Women
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Infants Fully Breastfed'
+		dataType: int64
+		formatString: 0
+		lineageTag: 7f455aea-e97b-5b69-aecf-9e268f407f6b
+		summarizeBy: sum
+		sourceColumn: Infants Fully Breastfed
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Infants Partially Breastfed'
+		dataType: int64
+		formatString: 0
+		lineageTag: 3f7e86a7-0160-5768-91b9-1e92620417a5
+		summarizeBy: sum
+		sourceColumn: Infants Partially Breastfed
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Infants Formula Fed'
+		dataType: int64
+		formatString: 0
+		lineageTag: 758d9d65-9d1a-5cc0-83a6-b03ab92c9830
+		summarizeBy: sum
+		sourceColumn: Infants Formula Fed
+
+		annotation SummarizationSetBy = Automatic
+
+	column Infants
+		dataType: int64
+		formatString: 0
+		lineageTag: 86962e72-ed3a-5bce-ac2a-2e90d18d0650
+		summarizeBy: sum
+		sourceColumn: Infants
+
+		annotation SummarizationSetBy = Automatic
+
+	column Children
+		dataType: int64
+		formatString: 0
+		lineageTag: 15180ea2-75e3-5cbc-bec5-fcad94d07def
+		summarizeBy: sum
+		sourceColumn: Children
+
+		annotation SummarizationSetBy = Automatic
+
+	column Participants
+		dataType: int64
+		formatString: 0
+		lineageTag: 182dcf93-300c-5c6c-8163-dde89a669236
+		summarizeBy: sum
+		sourceColumn: Participants
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Food Cost'
+		dataType: decimal
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: ff1cd6fd-df8e-5c8e-aa2a-579d466894a6
+		summarizeBy: sum
+		sourceColumn: Food Cost
+
+		annotation SummarizationSetBy = Automatic
+
+	column Rebates
+		dataType: decimal
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 588d934a-e8f8-50c3-a7a3-d95d9e658dc7
+		summarizeBy: sum
+		sourceColumn: Rebates
+
+		annotation SummarizationSetBy = Automatic
+
+	partition WIC_Monthly = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\mcan_\Desktop\CV Actualizado marzo 2025\Final CV and Resume\1. Descripcion trabajos\CV\_generador\portafolio_github\projects\wic-powerbi\data\WIC_Monthly.csv"),[Delimiter=",", Columns=14, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Agency", type text}, {"Month", type date}, {"Pregnant", Int64.Type}, {"Breastfeeding", Int64.Type}, {"Postpartum", Int64.Type}, {"Women", Int64.Type}, {"Infants Fully Breastfed", Int64.Type}, {"Infants Partially Breastfed", Int64.Type}, {"Infants Formula Fed", Int64.Type}, {"Infants", Int64.Type}, {"Children", Int64.Type}, {"Participants", Int64.Type}, {"Food Cost", Currency.Type}, {"Rebates", Currency.Type}}, "en-US")
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "ab16f8cf9af3b8b92f88",
+  "displayName": "Costs",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "visualInteractions": [
+    {
+      "source": "acc63cccffe83666f9ba",
+      "target": "5c23e6c227c61ff4cc78",
+      "type": "NoFilter"
+    },
+    {
+      "source": "acc63cccffe83666f9ba",
+      "target": "7e4069daee0a00362d5e",
+      "type": "NoFilter"
+    },
+    {
+      "source": "acc63cccffe83666f9ba",
+      "target": "d803d06e336c896a8c64",
+      "type": "NoFilter"
+    }
+  ]
+}
