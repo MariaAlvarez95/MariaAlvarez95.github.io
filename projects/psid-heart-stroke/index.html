@@ -4,14 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Heart Attack &amp; Stroke Survivors in the PSID | Maria Alvarez-Nuncio, MPH</title>
-<meta name="description" content="Demographic and socioeconomic profile of U.S. adults with a history of heart attack or stroke, Panel Study of Income Dynamics 2005–2021. Analysis in SAS by Maria Alvarez-Nuncio, MPH.">
+<meta name="description" content="Building an analytic dataset from nine waves of the Panel Study of Income Dynamics (2005–2021) in SAS to compare adults with and without a history of heart attack or stroke. Project by Maria Alvarez-Nuncio, MPH.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
 <style>
 :root{
-  --bg:#f6f8fb; --card:#ffffff; --fg:#0f2137; --fg-2:#46566b; --dim:#5f6e83; --rule:#dbe2ea; --grid:#e6ebf1; --sig:#1d5fd6;
-  --s-surv:#1d5fd6; --s-none:#7d8796;
+  --bg:#f6f8fb; --card:#ffffff; --fg:#0f2137; --fg-2:#46566b; --dim:#5f6e83; --rule:#dbe2ea; --sig:#1d5fd6;
   --serif:'Instrument Serif', Georgia, serif;
   --sans:'Schibsted Grotesk', system-ui, sans-serif;
   --mono:'IBM Plex Mono', ui-monospace, monospace;
@@ -46,53 +45,10 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(40px,6.4vw,76px);lin
 
 h2{font-family:var(--serif);font-weight:400;font-size:clamp(30px,3.2vw,42px);line-height:1.05;margin:clamp(48px,6vw,72px) 0 16px}
 h2::after{content:"";display:block;width:44px;height:3px;background:var(--sig);margin-top:14px}
-p + p{margin-top:12px}
 .prose{max-width:68ch}
 ul.list{list-style:none;max-width:72ch}
 ul.list li{position:relative;padding-left:22px;margin-top:10px}
 ul.list li::before{content:"";position:absolute;left:2px;top:.66em;width:7px;height:7px;background:var(--sig)}
-b.num{font-weight:600}
-
-/* chart */
-.card{background:var(--card);border:1px solid var(--rule);padding:clamp(16px,2.4vw,28px);margin-top:20px}
-.card h3{font-family:var(--sans);font-weight:600;font-size:17px;line-height:1.35}
-.card .sub{color:var(--fg-2);font-size:14px;margin-top:2px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:14px;font-size:14px;color:var(--fg-2)}
-.legend span{display:inline-flex;align-items:center;gap:8px}
-.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
-.dumb{margin-top:18px;--lab:clamp(150px,26%,230px)}
-.drow,.axis{display:grid;grid-template-columns:var(--lab) minmax(0,1fr);align-items:center;column-gap:16px}
-.drow{height:46px}
-.drow .lab{font-size:14px;line-height:1.3;color:var(--fg)}
-.track{position:relative;height:100%}
-.gl{position:absolute;top:0;bottom:0;width:1px;background:var(--grid)}
-.conn{position:absolute;top:50%;height:2px;margin-top:-1px;background:#c9d2dd}
-.dot{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;cursor:default;outline:none;background:transparent;border:0;padding:0}
-.dot::after{content:"";position:absolute;left:5px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px var(--card);transition:transform .15s}
-.dot:hover::after,.dot:focus-visible::after{transform:scale(1.25)}
-.dot:focus-visible{box-shadow:0 0 0 2px var(--fg)}
-.vl{position:absolute;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--fg);white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none}
-.axis{margin-top:4px}
-.axis .ticks{position:relative;height:20px}
-.axis .ticks span{position:absolute;transform:translateX(-50%);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
-.axis .ticks span:first-child{transform:none}
-.axis .ticks span:last-child{transform:translateX(-100%)}
-.tip{position:fixed;z-index:30;pointer-events:none;background:var(--fg);color:#fff;padding:8px 11px;font-size:13px;line-height:1.4;max-width:260px;opacity:0;transition:opacity .12s}
-.tip.on{opacity:1}
-.tip .tv{font-weight:600;font-size:15px}
-.tip .tk{display:flex;align-items:center;gap:7px;color:#c9d3df}
-.tip .tk i{width:12px;height:2px;display:inline-block}
-.note{color:var(--dim);font-size:13px;margin-top:14px;line-height:1.5}
-
-/* table */
-.tw{overflow-x:auto;margin-top:20px;border:1px solid var(--rule);background:var(--card)}
-table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
-th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums;vertical-align:top}
-th:first-child,td:first-child{text-align:left}
-thead th{font-weight:500;color:var(--fg-2);font-size:13px;line-height:1.35;background:#f9fbfd}
-thead th i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
-tbody tr:last-child td{border-bottom:0}
-td .ci{color:var(--dim);font-size:12.5px;display:block}
 
 .method{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}
 .method div{background:var(--card);border:1px solid var(--rule);padding:16px 18px}
@@ -107,12 +63,8 @@ footer a:hover{color:var(--sig)}
 @media (max-width:720px){
   .stats{grid-template-columns:1fr}
   .method{grid-template-columns:1fr}
-  .dumb{--lab:118px}
-  .drow .lab{font-size:13px}
-  .axis .ticks .q{display:none}
   .bar .hide-m{display:none}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -124,150 +76,43 @@ footer a:hover{color:var(--sig)}
 </header>
 
 <main>
-  <p class="eyebrow up"><span class="sq"></span>MPH Applied Practice Experience &middot; CDC</p>
+  <p class="eyebrow up"><span class="sq"></span>MPH Applied Practice Experience &middot; ORISE fellowship</p>
   <h1>Heart Attack &amp; Stroke Survivors in the PSID</h1>
-  <p class="lede">Who are the U.S. adults who have survived a heart attack or stroke? A descriptive profile of their age, income, education and living situation, compared with adults who have never had one, using nine waves of the Panel Study of Income Dynamics (2005&ndash;2021).</p>
+  <p class="lede">Building an analytic dataset from nine waves of the Panel Study of Income Dynamics (2005&ndash;2021) to compare the demographic and socioeconomic profile of adults with and without a history of heart attack or stroke.</p>
   <p class="meta up"><span>SAS 9.4</span><span>Survey weights</span><span>Longitudinal data linkage</span><span>2024&ndash;25</span></p>
 
   <section class="stats" aria-label="Key numbers">
     <div class="stat"><div class="v">22,779</div><div class="l">adults in the analytic dataset, one record per person</div></div>
     <div class="stat"><div class="v">9 <small>waves</small></div><div class="l">biennial PSID waves linked, 2005 to 2021</div></div>
-    <div class="stat"><div class="v">34% <small>vs. 18%</small></div><div class="l">in families earning under $25,000 a year: survivors vs. adults with no history</div></div>
+    <div class="stat"><div class="v">11 <small>characteristics</small></div><div class="l">demographic and socioeconomic variables harmonized across waves</div></div>
   </section>
 
   <h2>Question</h2>
   <div class="prose">
-    <p>Cardiovascular disease was the leading cause of death in the United States in 2022, with 941,652 deaths (American Heart Association, 2025). Social and economic conditions shape who has a heart attack or stroke and how people live afterwards. This project describes the demographic and socioeconomic profile of adults with a history of heart attack or stroke, compared with adults who have never had one, to help target prevention and support for survivors.</p>
+    <p>Cardiovascular disease was the leading cause of death in the United States in 2022, with 941,652 deaths (American Heart Association, 2025), and social and economic conditions shape who has a heart attack or stroke. The project set out to describe the adults who have survived a heart attack or stroke, compared with adults who have never had one.</p>
   </div>
 
   <h2>What I did</h2>
   <div class="method">
     <div><p class="k up">Build the dataset</p><p>Merged family- and individual-level files from nine biennial PSID waves in SAS 9.4, linked people across waves, kept one record per person and harmonized variables using each wave&rsquo;s codebook.</p></div>
     <div><p class="k up">Check the cohort</p><p>Identified participants who had died by linking each wave&rsquo;s death records to identifiers from earlier waves, and wrote a data dictionary for the analytic dataset.</p></div>
-    <div><p class="k up">Estimate</p><p>Produced weighted percentages with 95% confidence intervals using the PSID sampling weights, and tested differences between adults with and without a history of heart attack or stroke.</p></div>
-    <div><p class="k up">Communicate</p><p>Wrote a draft manuscript and presented the findings to the branch at CDC&rsquo;s Division for Heart Disease and Stroke Prevention.</p></div>
+    <div><p class="k up">Define groups and variables</p><p>Classified adults by history of heart attack or stroke, including 5- and 10-year survivors, and prepared 11 characteristics: age, sex, race and ethnicity, region, metropolitan area, marital status, number of children, health insurance, education, occupation and family income.</p></div>
+    <div><p class="k up">Estimate</p><p>Produced survey-weighted percentages with 95% confidence intervals using the PSID sampling weights, and tested differences between adults with and without a history of heart attack or stroke.</p></div>
   </div>
 
-  <h2>Findings</h2>
+  <h2>Skills</h2>
   <ul class="list">
-    <li><b class="num">Older.</b> 72% of survivors were 65 or older, compared with 28% of adults with no history.</li>
-    <li><b class="num">Lower income.</b> 34% of survivors lived in families earning under $25,000 a year, compared with 18%; only 15% earned $100,000 or more, compared with 32%.</li>
-    <li><b class="num">Less education, more often living without a spouse.</b> 57% of survivors had no college education (vs. 40%) and 55% were not married (vs. 44%).</li>
-    <li><b class="num">More often men and rural.</b> 54% of survivors were men (vs. 47%) and 24% lived outside metropolitan areas (vs. 18%).</li>
-    <li>Five- and ten-year survivors had a similar profile; for example, 33% and 34% were in the lowest income band.</li>
-  </ul>
-
-  <div class="card" id="chart">
-    <h3>Survivors are older, poorer and less educated than adults with no history</h3>
-    <p class="sub">Weighted percentage of each group with the characteristic, PSID 2005&ndash;2021</p>
-    <div class="legend" aria-hidden="true">
-      <span><i style="background:var(--s-surv)"></i>History of heart attack or stroke</span>
-      <span><i style="background:var(--s-none)"></i>No history</span>
-    </div>
-    <div class="dumb" id="dumb" role="img" aria-label="Dot chart comparing adults with and without a history of heart attack or stroke on seven characteristics. The same values are in the table below."></div>
-    <p class="note">Hover over or tab to a dot for its 95% confidence interval. All values are in the table below.</p>
-  </div>
-
-  <div class="tw">
-    <table>
-      <caption class="up" style="text-align:left;padding:12px 14px 4px;color:var(--dim)">Weighted % (95% CI)</caption>
-      <thead>
-        <tr>
-          <th scope="col">Characteristic</th>
-          <th scope="col"><i style="background:var(--s-none)"></i>No history</th>
-          <th scope="col"><i style="background:var(--s-surv)"></i>History of heart attack or stroke</th>
-          <th scope="col">p-value*</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-  <p class="note">*p-values test the whole variable (for example, all four income levels), not only the row shown. Source: Panel Study of Income Dynamics, public use dataset, 2005&ndash;2021; weighted estimates.</p>
-
-  <h2>Limitations</h2>
-  <ul class="list">
-    <li>This is a descriptive comparison: percentages are not adjusted for age. Survivors are much older, which explains part of the differences, such as marital status and health insurance through Medicare.</li>
-    <li>History of heart attack or stroke comes from survey reports, not medical records.</li>
-    <li>The results show who survivors are, not what causes heart attacks or strokes.</li>
+    <li>Working with a large longitudinal survey: merging files, linking people across waves and documenting every variable.</li>
+    <li>Survey-weighted estimation in SAS 9.4 with 95% confidence intervals.</li>
+    <li>Data quality checks against each wave&rsquo;s codebook before analysis.</li>
   </ul>
 </main>
 
 <footer>
-  <p>Completed as my MPH Applied Practice Experience (ORISE fellowship) at CDC&rsquo;s Division for Heart Disease and Stroke Prevention. The findings and conclusions are my own and do not necessarily represent the official position of CDC.</p>
+  <p>Completed as my MPH Applied Practice Experience during an ORISE fellowship. Results are not shown on this page.</p>
   <p>Data: Panel Study of Income Dynamics, public use dataset. Produced and distributed by the Institute for Social Research, University of Michigan, Ann Arbor, MI.</p>
   <p>Maria Alvarez-Nuncio, MPH &middot; <a href="https://www.linkedin.com/in/maria-alvarez-nuncio">LinkedIn</a> &middot; <a href="../../">Portfolio</a></p>
 </footer>
 
-<div class="tip" id="tip" role="tooltip"></div>
-
-<script>
-(function(){
-  // Weighted % and 95% CI from Table 1 (PSID 2005-2021). n = no history, s = history of heart attack or stroke.
-  var rows = [
-    {k:'Age 65 or older',            n:[27.6,26.3,29.0], s:[72.2,68.6,75.7], p:'<0.0001'},
-    {k:'Men',                        n:[47.3,46.3,48.3], s:[54.1,50.5,57.5], p:'<0.0001'},
-    {k:'Not married',                n:[43.7,41.9,45.5], s:[55.2,50.7,59.8], p:'<0.0001'},
-    {k:'No college education',       n:[39.5,37.4,41.6], s:[56.7,52.3,61.0], p:'<0.0001'},
-    {k:'Family income under $25K',   n:[17.6,16.2,18.9], s:[34.3,30.2,38.5], p:'<0.0001'},
-    {k:'Family income $100K or more',n:[32.4,30.6,34.1], s:[15.2,12.3,18.0], p:'<0.0001'},
-    {k:'Outside a metropolitan area',n:[18.1,16.2,20.1], s:[23.8,20.4,27.1], p:'0.0001'}
-  ];
-  var MAX = 100, ticks = [0,25,50,75,100];
-  var G = {s:'History of heart attack or stroke', n:'No history'};
-  var C = {s:'var(--s-surv)', n:'var(--s-none)'};
-  var pct = function(v){ return (v / MAX * 100) + '%'; };
-  var fmt = function(a){ return a[0].toFixed(1) + '% (' + a[1].toFixed(1) + '–' + a[2].toFixed(1) + ')'; };
-  function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
-
-  var host = document.getElementById('dumb'), tip = document.getElementById('tip');
-  rows.forEach(function(r){
-    var row = el('div','drow'); row.appendChild(el('div','lab', r.k));
-    var tr = el('div','track');
-    ticks.forEach(function(t){ var g = el('div','gl'); g.style.left = pct(t); tr.appendChild(g); });
-    var lo = Math.min(r.n[0], r.s[0]), hi = Math.max(r.n[0], r.s[0]);
-    var c = el('div','conn'); c.style.left = pct(lo); c.style.width = ((hi - lo) / MAX * 100) + '%'; tr.appendChild(c);
-    ['n','s'].forEach(function(g){
-      var d = el('button','dot'); d.type = 'button';
-      d.style.left = pct(r[g][0]); d.style.setProperty('--c', C[g]);
-      d.setAttribute('aria-label', r.k + ', ' + G[g] + ': ' + fmt(r[g]));
-      var show = function(){
-        tip.textContent = '';
-        tip.appendChild(el('div','tv', fmt(r[g])));
-        var k = el('div','tk'); var i = el('i'); i.style.background = C[g]; k.appendChild(i); k.appendChild(document.createTextNode(G[g])); tip.appendChild(k);
-        tip.appendChild(el('div', null, r.k));
-        var b = d.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
-        var x = Math.min(Math.max(8, b.left + b.width/2 - tw/2), window.innerWidth - tw - 8);
-        var y = b.top - th - 8; if (y < 48) y = b.bottom + 8;
-        tip.style.left = x + 'px'; tip.style.top = y + 'px'; tip.classList.add('on');
-      };
-      var hide = function(){ tip.classList.remove('on'); };
-      d.addEventListener('pointerenter', show); d.addEventListener('pointerleave', hide);
-      d.addEventListener('focus', show); d.addEventListener('blur', hide);
-      tr.appendChild(d);
-    });
-    // Direct label for the survivors series only, on the side away from the comparison dot
-    var v = el('div','vl', Math.round(r.s[0]) + '%');
-    if (r.s[0] >= r.n[0]) { v.style.left = 'calc(' + pct(r.s[0]) + ' + 14px)'; }
-    else { v.style.right = 'calc(' + (100 - r.s[0] / MAX * 100) + '% + 14px)'; }
-    tr.appendChild(v);
-    row.appendChild(tr); host.appendChild(row);
-  });
-  var ax = el('div','axis'); ax.appendChild(el('div'));
-  var tk = el('div','ticks');
-  ticks.forEach(function(t){ var s = el('span', (t === 25 || t === 75) ? 'q' : null, t + '%'); s.style.left = pct(t); tk.appendChild(s); });
-  ax.appendChild(tk); host.appendChild(ax);
-  window.addEventListener('scroll', function(){ tip.classList.remove('on'); }, {passive:true});
-
-  var tb = document.getElementById('tbody');
-  rows.forEach(function(r){
-    var tr = el('tr'); tr.appendChild(el('td', null, r.k));
-    ['n','s'].forEach(function(g){
-      var td = el('td'); td.appendChild(document.createTextNode(r[g][0].toFixed(1)));
-      td.appendChild(el('span','ci', r[g][1].toFixed(1) + '–' + r[g][2].toFixed(1))); tr.appendChild(td);
-    });
-    tr.appendChild(el('td', null, r.p)); tb.appendChild(tr);
-  });
-})();
-</script>
 </body>
 </html>
