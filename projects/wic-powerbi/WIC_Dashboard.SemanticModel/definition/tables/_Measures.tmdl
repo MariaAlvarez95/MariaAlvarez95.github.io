@@ -135,7 +135,7 @@ table _Measures
 			    AreaName & " | " & YearName & PartialYear
 		lineageTag: c584641a-e719-5b24-91a2-ac5d91a3a7ad
 
-	measure 'Highlight Georgia' = IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#2E6DA4", "#C5CBD3")
+	measure 'Highlight Georgia' = IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#2A78D6", "#C5CBD3")
 		lineageTag: 2a22de99-8fb4-5f43-bcf5-a18f728bb59f
 
 	measure 'Highlight Georgia Row' = IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#DCE8F4")

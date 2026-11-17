@@ -326,7 +326,7 @@ cultureInfo es-MX
 			          }
 			        },
 			        {
-			          "Nutrition services and administration (NSA)": {
+			          "Nutrition & admin (NSA)": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",
@@ -420,7 +420,7 @@ cultureInfo es-MX
 			          }
 			        },
 			        {
-			          "NSA cost per participant per month": {
+			          "NSA cost per participant": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",
@@ -462,7 +462,7 @@ cultureInfo es-MX
 			      "State": "Generated",
 			      "Terms": [
 			        {
-			          "Georgia's place among the 50 states and DC (1 = highest cost)": {
+			          "Georgia's rank (1 = highest cost)": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",

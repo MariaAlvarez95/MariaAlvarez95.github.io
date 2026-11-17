@@ -6,7 +6,7 @@
     "y": 10,
     "z": 1000,
     "height": 60,
-    "width": 880,
+    "width": 1240,
     "tabOrder": 1000
   },
   "visual": {
@@ -19,11 +19,23 @@
               {
                 "textRuns": [
                   {
-                    "value": "How Georgia compares with the other 50 states and DC",
+                    "value": "WIC Participation and Costs",
                     "textStyle": {
                       "fontFamily": "Segoe UI Semibold",
-                      "fontSize": "16pt",
-                      "color": "#1C2833"
+                      "fontSize": "15pt",
+                      "color": "#FFFFFF"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "How Georgia compares with the other 50 states and DC",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "11pt",
+                      "color": "#B5D4F4"
                     }
                   }
                 ]
@@ -35,13 +47,88 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F3A5F'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1F3A5F'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
       "padding": [
         {
           "properties": {
             "top": {
               "expr": {
                 "Literal": {
-                  "Value": "16L"
+                  "Value": "4L"
                 }
               }
             },
@@ -55,7 +142,7 @@
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "16L"
+                  "Value": "62L"
                 }
               }
             },

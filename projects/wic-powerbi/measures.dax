@@ -200,7 +200,7 @@ RETURN
 
 // Bar color: blue for Georgia, gray for every other agency
 Highlight Georgia =
-IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#2E6DA4", "#C5CBD3")
+IF(SELECTEDVALUE(Agencies[Agency]) = "Georgia", "#2A78D6", "#C5CBD3")
 
 // Row color in tables: light blue for Georgia, no color for the rest
 Highlight Georgia Row =

@@ -1,18 +1,18 @@
 {
   "name": "WIC Dashboard",
   "dataColors": [
-    "#2E6DA4",
-    "#76A5D0",
-    "#B9D3EA",
+    "#2A78D6",
+    "#EB6834",
+    "#1BAF7A",
     "#5D6D7E",
     "#C5CBD3",
-    "#E67E22",
-    "#16A085",
-    "#8E44AD"
+    "#EDA100",
+    "#6250D6",
+    "#E34948"
   ],
   "background": "#FFFFFF",
   "foreground": "#1C2833",
-  "tableAccent": "#2E6DA4",
+  "tableAccent": "#2A78D6",
   "good": "#1E8449",
   "neutral": "#B9770E",
   "bad": "#B03A2E",
@@ -45,7 +45,7 @@
           {
             "color": {
               "solid": {
-                "color": "#F4F6F7"
+                "color": "#EEF2F6"
               }
             },
             "transparency": 0
@@ -71,10 +71,10 @@
             "show": true,
             "color": {
               "solid": {
-                "color": "#D5D8DC"
+                "color": "#E3E6EA"
               }
             },
-            "radius": 6
+            "radius": 10
           }
         ]
       }

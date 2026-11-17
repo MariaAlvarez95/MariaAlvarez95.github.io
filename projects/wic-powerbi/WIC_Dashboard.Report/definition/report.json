@@ -65,6 +65,56 @@
       "type": "RegisteredResources",
       "items": [
         {
+          "name": "wic_icon_bottle.svg",
+          "path": "wic_icon_bottle.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_cart.svg",
+          "path": "wic_icon_cart.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_clipboard.svg",
+          "path": "wic_icon_clipboard.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_flag.svg",
+          "path": "wic_icon_flag.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_header.svg",
+          "path": "wic_icon_header.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_pin.svg",
+          "path": "wic_icon_pin.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_receipt.svg",
+          "path": "wic_icon_receipt.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_trend.svg",
+          "path": "wic_icon_trend.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_trophy.svg",
+          "path": "wic_icon_trophy.svg",
+          "type": "Image"
+        },
+        {
+          "name": "wic_icon_users.svg",
+          "path": "wic_icon_users.svg",
+          "type": "Image"
+        },
+        {
           "name": "wic_theme.json",
           "path": "wic_theme.json",
           "type": "CustomTheme"
