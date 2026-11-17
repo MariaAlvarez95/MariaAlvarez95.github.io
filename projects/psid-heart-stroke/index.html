@@ -50,7 +50,7 @@ ul.list{list-style:none;max-width:72ch}
 ul.list li{position:relative;padding-left:22px;margin-top:10px}
 ul.list li::before{content:"";position:absolute;left:2px;top:.66em;width:7px;height:7px;background:var(--sig)}
 
-.method{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}
+.method{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px}
 .method div{background:var(--card);border:1px solid var(--rule);padding:16px 18px}
 .method .k{color:var(--sig);margin-bottom:6px}
 .method p{font-size:15px;line-height:1.5;color:var(--fg)}
@@ -94,8 +94,7 @@ footer a:hover{color:var(--sig)}
 
   <h2>What I did</h2>
   <div class="method">
-    <div><p class="k up">Build the dataset</p><p>Merged family- and individual-level files from nine biennial PSID waves in SAS 9.4, linked people across waves, kept one record per person and harmonized variables using each wave&rsquo;s codebook.</p></div>
-    <div><p class="k up">Check the cohort</p><p>Identified participants who had died by linking each wave&rsquo;s death records to identifiers from earlier waves, and wrote a data dictionary for the analytic dataset.</p></div>
+    <div><p class="k up">Build the dataset</p><p>Merged family- and individual-level files from nine biennial PSID waves in SAS 9.4, linked people across waves, kept one record per person, harmonized variables using each wave&rsquo;s codebook and wrote a data dictionary for the analytic dataset.</p></div>
     <div><p class="k up">Define groups and variables</p><p>Classified adults by history of heart attack or stroke, including 5- and 10-year survivors, and prepared 11 characteristics: age, sex, race and ethnicity, region, metropolitan area, marital status, number of children, health insurance, education, occupation and family income.</p></div>
     <div><p class="k up">Estimate</p><p>Produced survey-weighted percentages with 95% confidence intervals using the PSID sampling weights, and tested differences between adults with and without a history of heart attack or stroke.</p></div>
   </div>
