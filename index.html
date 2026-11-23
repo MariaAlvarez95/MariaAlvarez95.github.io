@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Maria Alvarez-Nuncio, MPH | Public Health Data Analyst</title>
-<meta name="description" content="Portfolio of Maria Alvarez-Nuncio, MPH: public health data analysis, surveillance and dashboards in R, SAS and Power BI.">
+<title>Maria Alvarez-Nuncio, MPH | Health Data Analyst</title>
+<meta name="description" content="Portfolio of Maria Alvarez-Nuncio, MPH: health data analyst working with survey, surveillance and program data in R, SAS and Power BI.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500&display=swap">
@@ -62,7 +62,7 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 .sec-title{font-family:var(--serif);font-weight:400;font-size:clamp(36px,4vw,56px);line-height:1;letter-spacing:-.01em;padding:0 var(--gut);margin:clamp(56px,7vw,96px) 0 28px}
 .sec-title::after{content:"";display:block;width:44px;height:3px;background:var(--sig);margin-top:18px}
 .contact .sec-title{padding:0;margin:0 0 20px}
-#work,#about,#contact{scroll-margin-top:64px}
+#work,#published,#about,#skills,#contact{scroll-margin-top:64px}
 .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) minmax(0,1fr) 52px 132px;gap:20px;align-items:baseline;padding:22px var(--gut);border-bottom:1px solid var(--rule);transition:background .15s,color .15s}
 .row.th{border-top:1px solid var(--rule);color:var(--dim);padding-top:10px;padding-bottom:10px}
 .row{position:relative}
@@ -80,9 +80,33 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 .row .yr{white-space:nowrap}
 .note{padding:14px var(--gut) 0;color:var(--dim);max-width:900px}
 
+/* featured project cards */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,1.6vw,24px);padding:0 var(--gut)}
+.card{display:flex;flex-direction:column;border:1px solid var(--rule);background:#fff;transition:border-color .2s,box-shadow .2s}
+.card:hover{border-color:var(--sig);box-shadow:0 6px 24px rgba(15,33,55,.08)}
+.card .shot{display:block;aspect-ratio:16/9;overflow:hidden;border-bottom:1px solid var(--rule);background:#eef2f7}
+.card .shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:top left;transition:transform .5s var(--ease)}
+.card:hover .shot img{transform:scale(1.02)}
+.card .body{display:flex;flex-direction:column;gap:12px;flex:1;padding:18px 18px 20px}
+.card .meta{display:flex;justify-content:space-between;gap:12px;color:var(--dim)}
+.card h3{font-family:var(--serif);font-weight:400;font-size:clamp(25px,2vw,30px);line-height:1.05;letter-spacing:-.01em}
+.card p{color:var(--fg-2)}
+.card .lk{display:flex;gap:14px;margin-top:auto;padding-top:6px}
+.card .lk a{border-bottom:1px solid currentColor}
+.card .lk a:hover{color:var(--sig)}
+.more{padding:clamp(40px,5vw,64px) var(--gut) 14px;color:var(--dim)}
+
+/* skills */
+.skills{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(18px,2vw,28px);padding:0 var(--gut)}
+.skill{border-top:1px solid var(--rule);padding-top:14px}
+.skill h3{font-weight:500;color:var(--sig);margin-bottom:12px}
+.skill p{color:var(--fg)}
+.skill p.dim{color:var(--dim)}
+
 .about{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:clamp(28px,6vw,96px);padding:0 var(--gut) clamp(24px,4vw,48px)}
 .about .big{font-family:var(--serif);font-size:clamp(28px,3vw,44px);line-height:1.15;letter-spacing:-.01em}
 .about .big em{color:var(--sig)}
+.about .lede{max-width:52ch;margin-top:24px;color:var(--fg-2)}
 .kv{display:flex;flex-direction:column;gap:14px}
 .kv > div{display:flex;align-items:baseline;gap:10px}
 .kv .k{color:var(--dim)}
@@ -102,7 +126,14 @@ h1 em{padding-left:.5em;animation-delay:.1s}
   .row{grid-template-columns:minmax(0,1fr);row-gap:8px}
   .row.th{display:none}
   .about{grid-template-columns:1fr}
+  .cards{grid-template-columns:minmax(0,1fr)}
+  .skills{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+@media (min-width:861px) and (max-width:1100px){
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .skills{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:480px){.skills{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -111,14 +142,14 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 <header class="bar up">
   <span class="led"></span><span>Maria Alvarez-Nuncio, MPH</span><span class="dim hide-m">/ Portfolio 2026</span>
   <span class="grow"></span>
-  <nav><a href="#work">Work</a><a href="#published" class="hide-m">Published</a><a href="#about" class="hide-m">About</a><a href="#contact">Contact</a></nav></header>
+  <nav><a href="#work">Work</a><a href="#published" class="hide-m">Published</a><a href="#about" class="hide-m">About</a><a href="#skills" class="hide-m">Skills</a><a href="#contact">Contact</a></nav></header>
 
 <section class="hero" id="hero">
   <canvas id="gl"></canvas>
   <div class="hero-copy">
-    <p class="role up"><span class="sq"></span>Public health data analyst</p>
+    <p class="role up"><span class="sq"></span>Health data analyst</p>
     <h1><span>Maria</span><em>Alvarez-Nuncio</em></h1>
-    <p class="sub">I turn public health and nutrition data into clear tables, dashboards and reports, in R, SAS and Power BI.</p>
+    <p class="sub">I analyze complex health, survey and program data and turn it into clear estimates, dashboards and reports in R, SAS and Power BI.</p>
     <div class="cta up">
       <a class="key inv" href="#work">View work &darr;</a>
       <a class="key" href="https://github.com/MariaAlvarez95">GitHub &nearr;</a>
@@ -127,31 +158,44 @@ h1 em{padding-left:.5em;animation-delay:.1s}
   </div></section>
 
 <section class="sec" id="work">
-  <h2 class="sec-title">Selected Work</h2>
+  <h2 class="sec-title">Featured Projects</h2>
+  <div class="cards">
+    <article class="card">
+      <a class="shot" href="projects/wic-powerbi/screenshots/WIC_Dashboard_FY2025.pdf"><img src="projects/wic-powerbi/screenshots/overview.png" alt="WIC Participation and Costs Power BI dashboard: Georgia, fiscal year 2025" loading="lazy" width="1920" height="1080"></a>
+      <div class="body">
+        <div class="meta up"><span>Power BI &middot; DAX &middot; R</span><span>2026</span></div>
+        <h3>WIC Participation &amp; Costs: Georgia vs. the U.S.</h3>
+        <p>Power BI dashboard of USDA data for the 89 agencies that run WIC (October 2022&ndash;July 2026): participants by category, food and administrative costs per participant, and how Georgia ranks among the states. Georgia&rsquo;s program grew 5.9% in fiscal year 2025, more than twice the national rate.</p>
+        <div class="lk up"><a href="projects/wic-powerbi/screenshots/WIC_Dashboard_FY2025.pdf">PDF</a><a href="https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/wic-powerbi">Code</a></div>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="projects/places-georgia/"><img src="projects/places-georgia/preview.png" alt="Cardiometabolic Health and Food Insecurity in Georgia dashboard: county map of obesity" loading="lazy" width="1400" height="900"></a>
+      <div class="body">
+        <div class="meta up"><span>R &middot; flexdashboard &middot; plotly</span><span>2026</span></div>
+        <h3>Cardiometabolic Health &amp; Food Insecurity in Georgia</h3>
+        <p>Interactive dashboard of CDC PLACES 2025 county estimates for obesity, diabetes, high blood pressure, heart disease, physical inactivity and food insecurity across Georgia&rsquo;s 159 counties: maps, county rankings with 95% confidence intervals, and how food insecurity tracks obesity and diabetes.</p>
+        <div class="lk up"><a href="projects/places-georgia/">Live</a><a href="https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia">Code</a></div>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://mariaalvarez95.github.io/Biofortification/maria_dashboard.html"><img src="assets/biofortification.png" alt="Biofortified Crop Releases dashboard: micronutrient concentration vs. yield of biofortified crops" loading="lazy" width="1400" height="788"></a>
+      <div class="body">
+        <div class="meta up"><span>R &middot; flexdashboard</span><span>2025</span></div>
+        <h3>Biofortified Crop Releases</h3>
+        <p>MPH capstone dashboard of 450 HarvestPlus biofortified crop releases across Africa, Latin America and Asia (2004&ndash;2021): micronutrient content, yield and releases by country and crop.</p>
+        <div class="lk up"><a href="https://mariaalvarez95.github.io/Biofortification/maria_dashboard.html">Live</a><a href="https://github.com/MariaAlvarez95/Biofortification">Code</a></div>
+      </div>
+    </article>
+  </div>
+
+  <p class="more up">More projects</p>
   <div class="row th up"><span>Project</span><span>Description</span><span>Tools</span><span>Year</span><span>Links</span></div>
-  <div class="row">
-    <span class="name">Cardiometabolic Health &amp; Food Insecurity in Georgia</span>
-    <span class="d">Interactive dashboard of CDC PLACES 2025 county estimates for obesity, diabetes, high blood pressure, heart disease, physical inactivity and food insecurity: maps, county rankings with 95% confidence intervals, and how food insecurity tracks obesity and diabetes across Georgia&rsquo;s 159 counties.</span>
-    <span class="st up">R, flexdashboard, plotly</span><span class="yr up">2026</span>
-    <span class="lk up"><a href="projects/places-georgia/">Live</a><a href="https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/places-georgia">Code</a></span>
-  </div>
-  <div class="row">
-    <span class="name">WIC Participation &amp; Costs: Georgia vs. the U.S.</span>
-    <span class="d">Power BI dashboard of USDA data for the 89 agencies that run WIC (October 2022&ndash;July 2026): monthly participants by category, food and administrative costs per participant, and how Georgia compares with the other states. Georgia&rsquo;s program grew 5.9% in fiscal year 2025, more than twice the national rate.</span>
-    <span class="st up">Power BI, DAX, R</span><span class="yr up">2026</span>
-    <span class="lk up"><a href="projects/wic-powerbi/screenshots/WIC_Dashboard_FY2025.pdf">PDF</a><a href="https://github.com/MariaAlvarez95/MariaAlvarez95.github.io/tree/main/projects/wic-powerbi">Code</a></span>
-  </div>
   <div class="row">
     <span class="name">Heart Attack &amp; Stroke Survivors in the PSID</span>
     <span class="d">MPH Applied Practice Experience (ORISE fellowship): built an analytic dataset in SAS from nine biennial waves of the Panel Study of Income Dynamics (2005&ndash;2021), linking people across waves, and produced survey-weighted estimates comparing the demographic and socioeconomic profile of 22,779 adults with and without a history of heart attack or stroke.</span>
     <span class="st up">SAS 9.4</span><span class="yr up">2024&ndash;25</span>
     <span class="lk up"><a href="projects/psid-heart-stroke/">Summary</a></span>
-  </div>
-  <div class="row">
-    <span class="name">Biofortified Crop Releases</span>
-    <span class="d">MPH capstone dashboard of 450 HarvestPlus biofortified crop releases across Africa, Latin America and Asia (2004&ndash;2021): micronutrient content, yield and releases by country and crop.</span>
-    <span class="st up">R, flexdashboard</span><span class="yr up">2025</span>
-    <span class="lk up"><a href="https://mariaalvarez95.github.io/Biofortification/maria_dashboard.html">Live</a><a href="https://github.com/MariaAlvarez95/Biofortification">Code</a></span>
   </div>
   <div class="row">
     <span class="name">Heart Attack History Among Men</span>
@@ -199,14 +243,28 @@ h1 em{padding-left:.5em;animation-delay:.1s}
 <section class="sec" id="about">
   <h2 class="sec-title">About</h2>
   <div class="about">
-    <p class="big">Nutritionist turned public health data analyst. I work with surveillance and survey data from CDC, Emory and national nutrition surveys.</p>
+    <div>
+      <p class="big">Health data analyst with an MPH from Emory. I work with complex survey, surveillance and program data, and my clinical nutrition background helps me understand how health data are created.</p>
+      <p class="lede">I clean, link and analyze large health datasets (national surveys with sampling weights, longitudinal panels and program records) and turn them into estimates, dashboards and reports that people outside data teams can use, in English and Spanish.</p>
+    </div>
     <div class="kv up">
       <div><span class="k">Based in</span><span class="lead"></span><span>Atlanta, GA</span></div>
-      <div><span class="k">Focus</span><span class="lead"></span><span>Surveillance, nutrition, dashboards</span></div>
-      <div><span class="k">Tools</span><span class="lead"></span><span>R, SAS, Power BI, Excel</span></div>
-      <div><span class="k">Education</span><span class="lead"></span><span>MPH, Emory University</span></div>
+      <div><span class="k">Focus</span><span class="lead"></span><span>Survey, surveillance &amp; program data</span></div>
+      <div><span class="k">Background</span><span class="lead"></span><span>Clinical nutrition</span></div>
+      <div><span class="k">Education</span><span class="lead"></span><span>MPH &amp; Data Science Cert., Emory</span></div>
       <div><span class="k">Languages</span><span class="lead"></span><span>Spanish, English</span></div>
     </div>
+  </div>
+</section>
+
+<section class="sec" id="skills">
+  <h2 class="sec-title">Skills</h2>
+  <div class="skills">
+    <div class="skill"><h3 class="up">Programming</h3><p>R, SAS 9.4</p><p class="dim">Python and SQL (basic)</p></div>
+    <div class="skill"><h3 class="up">Statistical analysis</h3><p>Survey-weighted estimation, confidence intervals, regression (modified Poisson), causal diagrams (DAGs)</p></div>
+    <div class="skill"><h3 class="up">Data management</h3><p>Cleaning, harmonizing and linking data across sources and survey waves; data dictionaries; Git and GitHub</p></div>
+    <div class="skill"><h3 class="up">Visualization &amp; reporting</h3><p>Power BI and DAX, R flexdashboard, ggplot2, plotly, R Markdown reports</p></div>
+    <div class="skill"><h3 class="up">Public health</h3><p>Surveillance, epidemiology, program evaluation, nutrition</p></div>
   </div>
 </section>
 
